@@ -52,16 +52,16 @@
                 </div>
 
                 @if(auth()->user()->isAdmin())
-                    <form action="{{ route('sections.update', $section) }}" method="POST" class="mt-3 pt-3 border-t border-slate-200 flex items-center gap-2">
+                    <form id="incharge-form" action="{{ route('sections.update', $section) }}" method="POST" class="mt-3 pt-3 border-t border-slate-200 flex items-center gap-2">
                         @csrf
                         @method('PATCH')
                         <input type="hidden" name="name" value="{{ $section->name }}">
                         <input type="hidden" name="is_active" value="{{ $section->is_active ? 1 : 0 }}">
                         
-                        <select name="incharge_id" class="text-xs py-1 px-2 rounded border border-slate-300 flex-1 focus:ring-emerald-600">
+                        <select id="incharge_id" name="incharge_id" class="text-xs py-1 px-2 rounded border border-slate-300 flex-1 focus:ring-emerald-600">
                             <option value="">-- Change Incharge --</option>
                             @foreach($teachers as $t)
-                                <option value="{{ $t->id }}" {{ $section->incharge_id == $t->id ? 'selected' : '' }}>
+                                <option value="{{ $t->id }}" {{ $section->incharge_id == $t->id ? 'selected' : '' }} data-name="{{ $t->name }}">
                                     {{ $t->name }}
                                 </option>
                             @endforeach
@@ -70,6 +70,22 @@
                             Assign
                         </button>
                     </form>
+                    <script>
+                        document.getElementById('incharge-form').addEventListener('submit', function(e) {
+                            const select = document.getElementById('incharge_id');
+                            const selected = select.options[select.selectedIndex];
+                            if (selected.value && selected.value !== '{{ $section->incharge_id }}') {
+                                const teacherName = selected.dataset.name;
+                                const inchargeAssignments = @json($inchargeAssignments);
+                                if (inchargeAssignments[selected.value]) {
+                                    const prevClass = inchargeAssignments[selected.value].school_class ? inchargeAssignments[selected.value].school_class.name + (inchargeAssignments[selected.value].name !== 'Default' ? ' ' + inchargeAssignments[selected.value].name : '') : inchargeAssignments[selected.value].full_name || '';
+                                    if (!confirm('Teacher ' + teacherName + ' is already the incharge of another class proceeding will remove them as incharge of previous class')) {
+                                        e.preventDefault();
+                                    }
+                                }
+                            }
+                        });
+                    </script>
                 @endif
             </div>
         </div>

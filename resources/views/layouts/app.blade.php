@@ -35,7 +35,7 @@
 
                 <!-- User Profile & Logout -->
                 <div class="flex items-center space-x-4">
-                    <div class="hidden sm:flex flex-col text-right">
+                    <div class="hidden sm:flex flex-col items-center gap-0.5 mb-1 text-right">
                         <span class="text-sm font-semibold text-white">{{ auth()->user()->name }}</span>
                         <span class="text-xs text-emerald-200">
                             @if(auth()->user()->isAdmin())
@@ -55,7 +55,7 @@
 
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
-                        <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-emerald-700 text-xs font-medium rounded-md text-emerald-100 bg-emerald-800/80 hover:bg-emerald-700 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                        <button type="submit" class="inline-flex items-center px-3 py-2 -mb-1 border border-emerald-700 text-xs font-medium rounded-md text-emerald-100 bg-emerald-800/80 hover:bg-emerald-700 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>

@@ -65,7 +65,7 @@
             </div>
 
             @if($teachingAssignments->isEmpty())
-                <p class="text-sm text-slate-500 py-3">No specific subject teaching assignments recorded yet. The school administrator or class incharge can assign subjects to you.</p>
+                <p class="text-sm text-slate-500 py-3">No specific subject teaching assignments recorded yet. The school administrator can assign subjects to you.</p>
             @else
                 <div class="divide-y divide-slate-100">
                     @foreach($teachingAssignments as $assignment)

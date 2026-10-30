@@ -34,10 +34,15 @@ class ClassSectionController extends Controller
       ->get();
 
     $teachers = User::where('role', 'teacher')->where('is_active', true)->orderBy('name')->get();
+    $inchargeAssignments = ClassSection::with('schoolClass')
+      ->whereNotNull('incharge_id')
+      ->where('id', '!=', $section->id)
+      ->get()
+      ->keyBy('incharge_id');
 
     $isAuthorizedIncharge = $user->isAdmin() || ($user->isTeacher() && $section->incharge_id === $user->id);
 
-    return view('sections.show', compact('section', 'availableSubjects', 'teachers', 'isAuthorizedIncharge'));
+    return view('sections.show', compact('section', 'availableSubjects', 'teachers', 'isAuthorizedIncharge', 'inchargeAssignments'));
   }
 
   /**
@@ -52,19 +57,29 @@ class ClassSectionController extends Controller
     $validated = $request->validate(
       [
         'name' => ['required', 'string', 'max:50'],
-        'incharge_id' => ['nullable', 'exists:users,id', Rule::unique('class_sections', 'incharge_id')->ignore($section->id)],
+        'incharge_id' => ['nullable', 'exists:users,id'],
         'is_active' => ['required', 'boolean'],
       ],
       [
-        // Custom messages array
-        'incharge_id.unique' => 'This teacher is already assigned to another class.',
         'incharge_id.exists' => 'The selected incharge does not exist.',
       ]
     );
 
+    $newInchargeId = $validated['incharge_id'] ?: null;
+
+    if ($newInchargeId && $newInchargeId !== $section->incharge_id) {
+      $existingInchargeSection = ClassSection::where('incharge_id', $newInchargeId)
+        ->where('id', '!=', $section->id)
+        ->first();
+
+      if ($existingInchargeSection) {
+        $existingInchargeSection->update(['incharge_id' => null]);
+      }
+    }
+
     $section->update([
       'name' => $validated['name'],
-      'incharge_id' => $validated['incharge_id'] ?: null,
+      'incharge_id' => $newInchargeId,
       'is_active' => (bool) $validated['is_active'],
     ]);
 

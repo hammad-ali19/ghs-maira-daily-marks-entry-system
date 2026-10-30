@@ -35,10 +35,19 @@ class TeacherAssignmentController extends Controller
 
         $alreadyAssigned = TeacherAssignment::where('class_section_subject_id', $css->id)
             ->where('user_id', $teacher->id)
-            ->exists();
+            ->first();
 
         if ($alreadyAssigned) {
-            return back()->with('warning', 'Teacher is already assigned to this subject.');
+            return back()->with('warning', " {$alreadyAssigned->teacher->name} is already teaching {$css->subject->name} to {$css->classSection->fullname}");
+        }
+
+        // Enforce: only one teacher per subject per section
+        $existingAssignment = TeacherAssignment::with('teacher')
+            ->where('class_section_subject_id', $css->id)
+            ->first();
+
+        if ($existingAssignment) {
+            return back()->with('warning', "{$css->subject->name} is already being taught by MR. {$existingAssignment->teacher->name}. Remove the existing assignment first.");
         }
 
         TeacherAssignment::create([
