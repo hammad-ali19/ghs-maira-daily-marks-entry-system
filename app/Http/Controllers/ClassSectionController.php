@@ -87,6 +87,35 @@ class ClassSectionController extends Controller
   }
 
   /**
+   * Delete a class section (Admin only).
+   */
+  public function destroy(Request $request, ClassSection $section): RedirectResponse
+  {
+    if (! $request->user()->isAdmin()) {
+      abort(403, 'Only administrators can delete class sections.');
+    }
+
+    $hasTests = $section->classSectionSubjects()->whereHas('tests')->exists();
+
+    if ($hasTests) {
+      $section->update(['is_active' => false]);
+      return redirect()->route('classes.show', $section->schoolClass)->with('warning', "Section '{$section->full_name}' has historical test records. It was deactivated instead of deleted to protect historical data.");
+    }
+
+    $section->classSectionSubjects()->each(function ($css) {
+      $css->teacherAssignments()->delete();
+      $css->tests()->delete();
+      $css->delete();
+    });
+
+    $section->currentEnrollments()->update(['is_current' => false]);
+    $section->enrollments()->delete();
+    $section->delete();
+
+    return redirect()->route('classes.show', $section->schoolClass)->with('success', "Section '{$section->full_name}' was deleted successfully.");
+  }
+
+  /**
    * Assign a subject to this class section.
    * Authorized: Admin or the Class Incharge.
    */

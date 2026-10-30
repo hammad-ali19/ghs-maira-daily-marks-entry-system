@@ -46,7 +46,7 @@
     <!-- Sections Grid -->
     <div>
         <h3 class="text-base font-bold text-slate-900 mb-4">Class Sections</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2  gap-4">
             @forelse($class->sections as $section)
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 hover:border-emerald-500 transition">
                     <div class="flex items-start justify-between">
@@ -80,6 +80,15 @@
                         <a href="{{ route('sections.show', $section) }}" class="text-xs font-bold text-emerald-800 hover:text-emerald-950 inline-flex items-center">
                             Manage Students & Subjects &rarr;
                         </a>
+                        @if(auth()->user()->isAdmin())
+                            <form action="{{ route('sections.destroy', $section) }}" method="POST" class="inline" onsubmit="return confirm('Delete section {{ $section->full_name }}? This action cannot be undone.')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-xs text-rose-600 hover:text-rose-900 px-2 py-1 rounded hover:bg-rose-50">
+                                    Delete Section
+                                </button>
+                            </form>
+                        @endif
                         <a href="{{ route('tests.create', ['class_section_id' => $section->id]) }}" class="text-xs text-slate-600 hover:text-emerald-700 font-medium">
                             Record Marks
                         </a>

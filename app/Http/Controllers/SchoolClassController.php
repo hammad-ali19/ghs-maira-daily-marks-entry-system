@@ -55,7 +55,7 @@ class SchoolClassController extends Controller
                     $sectionId = $request->input("sections.{$index}.id");
 
                     // Check if this user is assigned to any other section
-                    $exists = \App\Models\ClassSection::where('incharge_id', $value)
+                    $exists = ClassSection::where('incharge_id', $value)
                         ->when($sectionId, function ($query) use ($sectionId) {
                             return $query->where('id', '!=', $sectionId);
                         })
@@ -134,7 +134,7 @@ class SchoolClassController extends Controller
                     $sectionId = $request->input("sections.{$index}.id");
 
                     // Check if this user is assigned to any other section
-                    $exists = \App\Models\ClassSection::where('incharge_id', $value)
+                    $exists = ClassSection::where('incharge_id', $value)
                         ->when($sectionId, function ($query) use ($sectionId) {
                             return $query->where('id', '!=', $sectionId);
                         })

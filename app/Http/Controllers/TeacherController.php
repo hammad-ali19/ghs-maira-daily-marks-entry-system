@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClassSection;
+use App\Models\TeacherAssignment;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -119,5 +121,30 @@ class TeacherController extends Controller
         $status = $teacher->is_active ? 'activated' : 'deactivated';
 
         return back()->with('success', "Teacher '{$teacher->name}' has been {$status}.");
+    }
+
+    /**
+     * Delete a teacher account (Admin only).
+     */
+    public function destroy(Request $request, User $teacher): RedirectResponse
+    {
+        if (! $request->user()->isAdmin()) {
+            abort(403, 'Only administrators can delete teacher accounts.');
+        }
+
+        if ($teacher->role !== 'teacher') {
+            abort(404);
+        }
+
+        // Remove as incharge of any class sections
+        ClassSection::where('incharge_id', $teacher->id)->update(['incharge_id' => null]);
+
+        // Remove teacher assignments for subjects
+        TeacherAssignment::where('user_id', $teacher->id)->delete();
+
+        $name = $teacher->name;
+        $teacher->delete();
+
+        return redirect()->route('teachers.index')->with('success', "Teacher '{$name}' deleted successfully.");
     }
 }

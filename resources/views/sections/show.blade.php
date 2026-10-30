@@ -78,7 +78,6 @@
                                 const teacherName = selected.dataset.name;
                                 const inchargeAssignments = @json($inchargeAssignments);
                                 if (inchargeAssignments[selected.value]) {
-                                    const prevClass = inchargeAssignments[selected.value].school_class ? inchargeAssignments[selected.value].school_class.name + (inchargeAssignments[selected.value].name !== 'Default' ? ' ' + inchargeAssignments[selected.value].name : '') : inchargeAssignments[selected.value].full_name || '';
                                     if (!confirm('Teacher ' + teacherName + ' is already the incharge of another class proceeding will remove them as incharge of previous class')) {
                                         e.preventDefault();
                                     }

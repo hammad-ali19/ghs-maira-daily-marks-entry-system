@@ -31,10 +31,12 @@ Route::middleware(['auth', 'active'])->group(function () {
         // Teacher Account Management
         Route::resource('teachers', TeacherController::class)->except(['show', 'destroy']);
         Route::patch('/teachers/{teacher}/toggle', [TeacherController::class, 'toggleStatus'])->name('teachers.toggle');
+        Route::delete('/teachers/{teacher}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
 
         // School Classes & Sections Management
         Route::resource('classes', SchoolClassController::class)->except(['show']);
         Route::patch('/sections/{section}', [ClassSectionController::class, 'update'])->name('sections.update');
+        Route::delete('/sections/{section}', [ClassSectionController::class, 'destroy'])->name('sections.destroy');
 
         // Subject Catalogue Management
         Route::resource('subjects', SubjectController::class)->except(['show']);
