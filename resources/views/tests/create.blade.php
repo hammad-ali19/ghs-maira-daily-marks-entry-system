@@ -178,18 +178,20 @@
     @elseif($selectedSectionId && $availableSubjects->isEmpty())
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center text-amber-800">
             <h4 class="font-bold text-base mb-1">No Subjects Assigned</h4>
-            <p class="text-xs text-amber-700 mb-4">This class section does not have any subjects assigned yet. Please assign subjects to this class first.</p>
-            <a href="{{ route('sections.show', $selectedSectionId) }}" class="inline-flex items-center px-4 py-2 bg-amber-700 text-white text-xs font-semibold rounded-lg">
+            <p class="text-xs text-amber-700 mb-4">This class section does not have any subjects assigned yet. Please contact you administrator.</p>
+            {{-- <a href="{{ route('sections.show', $selectedSectionId) }}" class="inline-flex items-center px-4 py-2 bg-amber-700 text-white text-xs font-semibold rounded-lg">
                 Assign Subjects to Class &rarr;
-            </a>
+            </a> --}}
         </div>
     @elseif($selectedSectionId && $students->isEmpty())
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center text-amber-800">
             <h4 class="font-bold text-base mb-1">No Students Enrolled</h4>
             <p class="text-xs text-amber-700 mb-4">There are currently no active students enrolled in this class section.</p>
+            @if($isAuthorized)
             <a href="{{ route('students.create', ['class_section_id' => $selectedSectionId]) }}" class="inline-flex items-center px-4 py-2 bg-amber-700 text-white text-xs font-semibold rounded-lg">
-                Enroll Students in Class &rarr;
+                Enroll Students in Class {{$isAuthorized}} &rarr;
             </a>
+            @endif
         </div>
     @endif
 </div>

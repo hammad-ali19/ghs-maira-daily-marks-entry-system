@@ -84,6 +84,8 @@ class TestController extends Controller
         $selectedSectionId = $request->input('class_section_id');
         $selectedSubjectId = $request->input('subject_id');
 
+        $isAuthorized = false; // Initialize it
+
         $availableSubjects = collect();
         $students = collect();
 
@@ -91,7 +93,7 @@ class TestController extends Controller
             $selectedSection = ClassSection::find($selectedSectionId);
 
             if ($selectedSection) {
-                // If teacher, only show subjects they are assigned to, unless they are incharge of the section
+                // If teacher, only show subjects they are assigned to
                 $cssQuery = ClassSectionSubject::with('subject')
                     ->where('class_section_id', $selectedSectionId);
 
@@ -116,10 +118,14 @@ class TestController extends Controller
                     })
                     ->orderBy('name')
                     ->get();
+
+            }
+            if ($selectedSection) {
+                $isAuthorized = $selectedSection->incharge_id === $user->id || $user->isAdmin();
             }
         }
 
-        return view('tests.create', compact('sections', 'selectedSectionId', 'selectedSubjectId', 'availableSubjects', 'students'));
+        return view('tests.create', compact('isAuthorized','sections', 'selectedSectionId', 'selectedSubjectId', 'availableSubjects', 'students'));
     }
 
     /**

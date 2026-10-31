@@ -80,10 +80,18 @@ class StudentController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'b_form_number' => ['required', 'string', 'max:50', 'unique:students,b_form_number'],
+            'name' => ['required', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
+            'b_form_number' => ['required', 'regex:/^\d{5}-\d{7}-\d{1}$/', 'unique:students,b_form_number'],
             'class_section_id' => ['required', 'exists:class_sections,id'],
-            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:1024'],
+        ],
+        [
+            // Rule-specific custom messages
+            'name.required' => 'Please enter the name of student.',
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'b_form_number.required' => 'Please enter the B-Form / CNIC of student.',
+            'b_form_number.regex' => 'The B-Form / CNIC format must be 12345-1234567-1.',
+            'b_form_number.unique' => 'The student already exists in the system'
         ]);
 
         $section = ClassSection::findOrFail($validated['class_section_id']);
@@ -158,11 +166,18 @@ class StudentController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'b_form_number' => ['required', 'string', 'max:50', Rule::unique('students')->ignore($student->id)],
+            'name' => ['required', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
+            'b_form_number' => ['required', 'regex:/^\d{5}-\d{7}-\d{1}$/', Rule::unique('students')->ignore($student->id)],
             'class_section_id' => ['required', 'exists:class_sections,id'],
             'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'is_active' => ['required', 'boolean'],
+        ],
+        [
+            // Rule-specific custom messages
+            'name.required' => 'Please enter the name of student.',
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'b_form_number.required' => 'Please enter the B-Form / CNIC of student.',
+            'b_form_number.regex' => 'The B-Form / CNIC format must be 12345-1234567-1.' 
         ]);
 
         $newSection = ClassSection::findOrFail($validated['class_section_id']);

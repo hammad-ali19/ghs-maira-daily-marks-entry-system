@@ -38,7 +38,7 @@
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Enrolled Students</p>
                 <p class="text-3xl font-extrabold text-slate-900 mt-1">{{ $studentCount }}</p>
                 <a href="{{ route('students.index') }}" class="text-xs text-emerald-700 hover:text-emerald-900 font-medium inline-flex items-center mt-2">
-                    View Students &rarr;
+                    Manage Students &rarr;
                 </a>
             </div>
             <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-700">

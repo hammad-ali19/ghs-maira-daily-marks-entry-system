@@ -27,7 +27,13 @@
                             GHS
                         </div>
                         <div>
-                            <span class="font-bold text-lg tracking-tight block leading-tight text-white">{{ config('app.name', 'GHS Maira Quick Test System') }}</span>
+                            <span class="font-bold text-lg tracking-tight hidden md:block leading-tight text-white">
+                                    {{ config('app.name', 'GHS Maira Quick Test System') }}
+                            </span>
+                            <!-- Short app name/Abbreviation: visible by default, hidden on medium/large screens -->
+                            <span class="font-bold text-lg tracking-tight block md:hidden leading-tight text-white">
+                                {{ config('app.short_name', 'Quick Test Record System') }}
+                            </span>
                             <span class="text-xs text-emerald-200 block">Daily Test & Academic Records</span>
                         </div>
                     </a>

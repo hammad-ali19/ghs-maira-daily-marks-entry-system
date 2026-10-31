@@ -50,7 +50,7 @@
                 <input type="file" name="photo" id="photo" required accept="image/jpeg,image/png,image/jpg,image/webp"
                     class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
             </div>
-            <p class="text-xs text-slate-500 mt-1">Photograph is required for official identity records. Max size: 2MB.</p>
+            <p class="text-xs text-slate-500 mt-1">Photograph is required for official identity records. Max size: 1MB.</p>
         </div>
 
         <div class="border-t border-slate-200 pt-5 flex items-center justify-end space-x-3">

@@ -45,11 +45,20 @@ class TeacherController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
-        ]);
+        $validated = $request->validate(
+            [
+                'name' => ['required', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+                'password' => ['required', 'string', 'min:8'],
+            ],
+            [
+                // Rule-specific custom messages
+                'name.required' => 'Please enter your name.',
+                'name.regex' => 'The name must only contain letters and spaces.',
+                'email.unique' => 'This email address is already registered.',
+                'password.min' => 'Your password must be at least 8 characters long.',
+            ]
+        );
 
         User::create([
             'name' => $validated['name'],
@@ -84,10 +93,15 @@ class TeacherController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($teacher->id)],
             'password' => ['nullable', 'string', 'min:8'],
             'is_active' => ['required', 'boolean'],
+        ],
+        [
+            'name.required' => 'Please enter the name of student.',
+            'name.regex' => 'The name must only contain letters and spaces.',
+            'password.password' => 'Password must be atleast 8 charaters'
         ]);
 
         $data = [

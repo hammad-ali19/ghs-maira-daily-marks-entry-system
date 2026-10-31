@@ -109,7 +109,7 @@
                                         Edit
                                     </a>
                                 @endif
-                                @if(auth()->user()->isAdmin())
+                                @if(auth()->user()->isAdmin() || (auth()->user()->isTeacher() && $currSec && $currSec->incharge_id === auth()->id()))
                                     <form action="{{ route('students.destroy', $student) }}" method="POST" class="inline" onsubmit="return confirm('Delete student? Historical records will be safely preserved.')">
                                         @csrf
                                         @method('DELETE')

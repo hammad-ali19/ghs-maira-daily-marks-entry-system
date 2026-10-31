@@ -63,8 +63,10 @@
 
         <div>
             <label for="photo" class="block text-sm font-medium text-slate-700 mb-1">Change Photograph</label>
+            
             <input type="file" name="photo" id="photo" accept="image/jpeg,image/png,image/jpg,image/webp"
-                class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                class="block text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+            
             <p class="text-xs text-slate-500 mt-1">Leave empty to keep existing photo.</p>
         </div>
 
