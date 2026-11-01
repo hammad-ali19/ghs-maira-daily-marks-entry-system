@@ -57,7 +57,7 @@
             <span class="font-extrabold text-slate-900 text-base">{{ $test->max_marks }}</span>
         </div>
         <div>
-            <span class="text-xs text-slate-500 uppercase font-bold block">Teacher In-Charge</span>
+            <span class="text-xs text-slate-500 uppercase font-bold block">Conducted By:</span>
             <span class="font-medium text-slate-800">{{ $test->creator->name }}</span>
         </div>
     </div>

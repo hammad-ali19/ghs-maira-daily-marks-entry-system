@@ -169,3 +169,83 @@ test('user can export report as CSV', function () {
     $response->assertStatus(200)
         ->assertHeader('content-type', 'text/csv; charset=UTF-8');
 });
+
+test('admin can clear all test history for a student', function () {
+    $admin = User::factory()->admin()->create();
+    $student = Student::factory()->create(['name' => 'Prep Student one']);
+
+    $class = SchoolClass::factory()->create();
+    $section = ClassSection::factory()->create(['school_class_id' => $class->id]);
+    $subject = Subject::factory()->create(['name' => 'Mathematics']);
+    $css = ClassSectionSubject::create(['class_section_id' => $section->id, 'subject_id' => $subject->id]);
+
+    $test = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'Algebra Quiz',
+        'test_date' => '2026-10-01',
+        'max_marks' => 20,
+        'created_by' => $admin->id,
+    ]);
+    TestResult::create(['test_id' => $test->id, 'student_id' => $student->id, 'obtained_marks' => 18]);
+
+    $response = $this->actingAs($admin)
+        ->delete(route('students.clear-history', $student));
+
+    $response->assertRedirect(route('students.history', $student));
+    $response->assertSessionHas('success');
+
+    $this->assertDatabaseMissing('test_results', ['student_id' => $student->id]);
+    $this->assertFalse($student->fresh()->testResults()->exists());
+});
+
+test('student can be deleted after clearing test history', function () {
+    $admin = User::factory()->admin()->create();
+    $student = Student::factory()->create(['name' => 'Prep Student one']);
+
+    $class = SchoolClass::factory()->create();
+    $section = ClassSection::factory()->create(['school_class_id' => $class->id]);
+    $subject = Subject::factory()->create(['name' => 'Mathematics']);
+    $css = ClassSectionSubject::create(['class_section_id' => $section->id, 'subject_id' => $subject->id]);
+
+    $test = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'Algebra Quiz',
+        'test_date' => '2026-10-01',
+        'max_marks' => 20,
+        'created_by' => $admin->id,
+    ]);
+    TestResult::create(['test_id' => $test->id, 'student_id' => $student->id, 'obtained_marks' => 18]);
+
+    $this->assertTrue($student->fresh()->testResults()->exists());
+
+    $this->actingAs($admin)->delete(route('students.clear-history', $student));
+
+    $response = $this->actingAs($admin)->delete(route('students.destroy', $student));
+
+    $response->assertRedirect(route('students.index'));
+    $response->assertSessionHas('success');
+    $this->assertNull($student->fresh());
+});
+
+test('teacher cannot clear test history for a student', function () {
+    $teacher = User::factory()->teacher()->create();
+    $student = Student::factory()->create();
+    $class = SchoolClass::factory()->create();
+    $section = ClassSection::factory()->create(['school_class_id' => $class->id]);
+    $subject = Subject::factory()->create(['name' => 'Mathematics']);
+    $css = ClassSectionSubject::create(['class_section_id' => $section->id, 'subject_id' => $subject->id]);
+
+    $test = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'Algebra Quiz',
+        'test_date' => '2026-10-01',
+        'max_marks' => 20,
+        'created_by' => $teacher->id,
+    ]);
+    TestResult::create(['test_id' => $test->id, 'student_id' => $student->id, 'obtained_marks' => 18]);
+    $response = $this->actingAs($teacher)
+        ->delete(route('students.clear-history', $student));
+    // dd($student->fresh()->testResults()->get());
+    $response->assertStatus(403);
+    $this->assertTrue($student->fresh()->testResults()->exists());
+});

@@ -43,6 +43,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         // Destructive / Deletion operations restricted to admin
         Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
+        Route::delete('/students/{student}/clear-history', [StudentController::class, 'clearHistory'])->name('students.clear-history');
         Route::delete('/tests/{test}', [TestController::class, 'destroy'])->name('tests.destroy');
     });
 
@@ -67,7 +68,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/students/{student}/history', [StudentHistoryController::class, 'show'])->name('students.history');
 
     // Daily Tests & Marks Entry
-    Route::resource('tests', TestController::class)->except(['destroy']);
+    Route::resource('tests', TestController::class);
 
     // Reports & Downloads
     Route::get('/reports/test/{test}', [ReportController::class, 'show'])->name('reports.test');

@@ -83,7 +83,7 @@ class StudentController extends Controller
             'name' => ['required', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
             'b_form_number' => ['required', 'regex:/^\d{5}-\d{7}-\d{1}$/', 'unique:students,b_form_number'],
             'class_section_id' => ['required', 'exists:class_sections,id'],
-            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:1024'],
+            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:20'],
         ],
         [
             // Rule-specific custom messages
@@ -91,7 +91,13 @@ class StudentController extends Controller
             'name.regex' => 'The name must only contain letters and spaces.',
             'b_form_number.required' => 'Please enter the B-Form / CNIC of student.',
             'b_form_number.regex' => 'The B-Form / CNIC format must be 12345-1234567-1.',
-            'b_form_number.unique' => 'The student already exists in the system'
+            'b_form_number.unique' => 'The student already exists in the system.',
+            'class_section_id.required' => 'Please select the class section.',
+            'photo.image' => 'Somthing wrong with mimes',
+            'photo.required' => 'photo required',
+            'photo.mimes' => 'mimes error',
+            'photo.max' => 'size errro'
+            
         ]);
 
         $section = ClassSection::findOrFail($validated['class_section_id']);
@@ -169,7 +175,7 @@ class StudentController extends Controller
             'name' => ['required', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
             'b_form_number' => ['required', 'regex:/^\d{5}-\d{7}-\d{1}$/', Rule::unique('students')->ignore($student->id)],
             'class_section_id' => ['required', 'exists:class_sections,id'],
-            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:1024'],
             'is_active' => ['required', 'boolean'],
         ],
         [
@@ -241,7 +247,7 @@ class StudentController extends Controller
             $student->update(['is_active' => false]);
 
             return redirect()->route('students.index')
-                ->with('warning', "Student '{$student->name}' has recorded test marks. Deactivated instead of permanently deleted to preserve historical test records.");
+                ->with('warning', "Student '{$student->name}' has recorded test marks. Deactivated instead of permanently deleted to preserve historical test records. Delete test history for this student first.");
         }
 
         // Delete photo if exists
@@ -253,5 +259,22 @@ class StudentController extends Controller
         $student->delete();
 
         return redirect()->route('students.index')->with('success', "Student '{$student->name}' deleted successfully.");
+    }
+
+    /**
+     * Clear all test history for a student (Admin only).
+     */
+    public function clearHistory(Student $student): RedirectResponse
+    {
+        if (! auth()->user()->isAdmin()) {
+            abort(403, 'Only administrators can clear student test history.');
+        }
+
+        DB::transaction(function () use ($student) {
+            $student->testResults()->delete();
+            
+        });
+        return redirect()->route('students.history', $student)
+            ->with('success', "All test history for '{$student->name}' has been deleted.");
     }
 }

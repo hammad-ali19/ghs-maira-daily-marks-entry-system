@@ -79,7 +79,7 @@
                         <th class="px-4 py-3 text-center">Max Marks</th>
                         <th class="px-4 py-3 text-center">Students Tested</th>
                         <th class="px-4 py-3 text-left">Conducted By</th>
-                        <th class="px-4 py-3 text-right">Actions</th>
+                        <th class="px-4 py-3 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -118,9 +118,15 @@
                                 <a href="{{ route('reports.test.pdf', $test) }}" class="text-slate-500 hover:text-slate-800 font-medium">
                                     PDF
                                 </a>
-                                <a href="{{ route('reports.test.csv', $test) }}" class="text-slate-500 hover:text-slate-800 font-medium">
-                                    CSV
-                                </a>
+                                @if(auth()->user()->isAdmin())
+                                <form class="inline" action="{{route('tests.destroy', $test)}}" method="POST" onsubmit="return confirm('Delete this test?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="text-red-500 cursor-pointer">
+                                       Delete
+                                    </button>
+                                </form>
+                                @endif
                             </td>
                         </tr>
                     @empty

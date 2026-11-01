@@ -52,18 +52,19 @@
             <table class="min-w-full divide-y divide-slate-200 text-sm">
                 <thead class="bg-slate-50 text-slate-700 font-semibold">
                     <tr>
-                        <th class="px-4 py-3 text-left">Photo</th>
+                        {{-- <th class="px-4 py-3 text-left">Photo</th> --}}
                         <th class="px-4 py-3 text-left">Student Name</th>
                         <th class="px-4 py-3 text-left">B-Form Number (Unique)</th>
                         <th class="px-4 py-3 text-left">Current Class</th>
                         <th class="px-4 py-3 text-center">Status</th>
+                        <th class="px-4 py-3 text-center">History</th>
                         <th class="px-4 py-3 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($students as $student)
                         <tr class="hover:bg-slate-50/70 transition">
-                            <td class="px-4 py-3 whitespace-nowrap">
+                            {{-- <td class="px-4 py-3 whitespace-nowrap">
                                 @if($student->photo_path)
                                     <img src="{{ asset('storage/' . $student->photo_path) }}" alt="{{ $student->name }}" class="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-xs">
                                 @else
@@ -71,7 +72,7 @@
                                         {{ substr($student->name, 0, 1) }}
                                     </div>
                                 @endif
-                            </td>
+                            </td> --}}
                             <td class="px-4 py-3 whitespace-nowrap font-bold text-slate-900">
                                 <a href="{{ route('students.history', $student) }}" class="hover:text-emerald-700">
                                     {{ $student->name }}
@@ -100,6 +101,9 @@
                                 <a href="{{ route('students.history', $student) }}" class="text-emerald-700 hover:text-emerald-900 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
                                     Test History
                                 </a>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-right space-x-2 text-xs">
+                                
                                 @php
                                     $currSec = $student->currentEnrollment?->classSection;
                                     $canManage = auth()->user()->isAdmin() || (auth()->user()->isTeacher() && $currSec && $currSec->incharge_id === auth()->id());
@@ -108,12 +112,10 @@
                                     <a href="{{ route('students.edit', $student) }}" class="text-slate-600 hover:text-slate-900 font-medium">
                                         Edit
                                     </a>
-                                @endif
-                                @if(auth()->user()->isAdmin() || (auth()->user()->isTeacher() && $currSec && $currSec->incharge_id === auth()->id()))
-                                    <form action="{{ route('students.destroy', $student) }}" method="POST" class="inline" onsubmit="return confirm('Delete student? Historical records will be safely preserved.')">
+                                    <form action="{{ route('students.destroy', $student) }}" method="POST" class="inline" onsubmit="return confirm('Delete student?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-rose-600 hover:text-rose-900 font-medium">Delete</button>
+                                        <button type="submit" class="text-rose-600 hover:text-rose-900 font-medium cursor-pointer">Delete</button>
                                     </form>
                                 @endif
                             </td>

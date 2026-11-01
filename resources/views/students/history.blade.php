@@ -96,6 +96,16 @@
         </form>
     </div>
 
+    @if($totalTests > 0 && auth()->user()->isAdmin())
+        <form action="{{ route('students.clear-history', $student) }}" method="POST" class="flex justify-end" onsubmit="return confirm('Are you sure you want to delete all test history for this student? This action cannot be undone.');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="px-4 py-2 text-sm font-medium text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 hover:text-rose-900 rounded-lg shadow-xs transition">
+                Clear Test History
+            </button>
+        </form>
+    @endif
+
     <!-- Test History Chronological Table (Newest First) -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">

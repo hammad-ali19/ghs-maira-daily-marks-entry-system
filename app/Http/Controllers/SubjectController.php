@@ -40,7 +40,7 @@ class SubjectController extends Controller
         ]);
 
         $subject = Subject::create([
-            'name' => trim($validated['name']),
+            'name' => ucwords(trim($validated['name'])),
             'is_active' => true,
         ]);
 

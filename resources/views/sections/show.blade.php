@@ -91,7 +91,7 @@
     </div>
 
     <!-- Two Column Layout: Left Column = Subjects & Teachers, Right Column = Enrolled Students -->
-    <div class="grid {{ auth()->user()->isAdmin() ? 'lg:grid-cols-12' : 'lg:grid-cols-1' }} gap-6">
+    <div class="grid lg:grid-cols-12 gap-6">
         <!-- Subjects & Teachers (5 cols) -->
         @if(auth()->user()->isAdmin())
         <div class="lg:col-span-5 space-y-5">
@@ -189,9 +189,41 @@
                 </div>
             </div>
         </div>
+        @elseif($isAuthorizedIncharge)
+        <div class="lg:col-span-4 space-y-3">
+                    @forelse($section->classSectionSubjects as $css)
+                        <div class="flex flex-row justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <div>
+                                <span class="font-bold text-emerald-950 text-sm">{{ $css->subject->name }}</span>             
+                            </div>
+
+                            <!-- Assigned Teachers for this Subject -->
+                            <div class="mt-1">
+                                <div class="">
+                                    @forelse($css->teacherAssignments as $ta)
+                                        <div>
+                                            <span class="px-2 py-0.5 rounded text-xs bg-white border border-slate-300 text-slate-800">
+                                                {{ $ta->teacher->name }}
+                                            </span>
+                                        </div>
+                                    @empty
+                                        <span class="text-xs text-slate-400 italic">No teacher assigned yet.</span>
+                                    @endforelse
+                                </div>
+
+                                <!-- Assign Teacher Form -->
+                                
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-6 text-xs text-slate-500">
+                            No subjects assigned yet to this class. Use the form above to add subjects.
+                        </div>
+                    @endforelse
+                </div>
         @endif
         <!-- Enrolled Students (7 cols) -->
-        <div class="{{ auth()->user()->isAdmin() ? 'lg:col-span-7' : 'lg:col-span-1' }}">
+        <div class=" {{auth()->user()->isAdmin() ? 'lg:col-span-7' : 'lg:col-span-8'}}">
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="p-4 border-b border-slate-200 flex items-center justify-between">
                     <div>
@@ -209,7 +241,7 @@
                     <table class="min-w-full divide-y divide-slate-200 text-sm">
                         <thead class="bg-slate-50 text-slate-700 font-semibold text-xs">
                             <tr>
-                                <th class="px-4 py-2.5 text-left">Photo</th>
+                                {{-- <th class="px-4 py-2.5 text-left">Photo</th> --}}
                                 <th class="px-4 py-2.5 text-left">Student Name</th>
                                 <th class="px-4 py-2.5 text-left">B-Form Number</th>
                                 <th class="px-4 py-2.5 text-center">Status</th>
@@ -220,7 +252,7 @@
                             @forelse($section->currentEnrollments as $enrollment)
                                 @php $student = $enrollment->student; @endphp
                                 <tr class="hover:bg-slate-50/70 transition">
-                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                    {{-- <td class="px-4 py-2.5 whitespace-nowrap">
                                         @if($student->photo_path)
                                             <img src="{{ asset('storage/' . $student->photo_path) }}" alt="{{ $student->name }}" class="w-9 h-9 rounded-full object-cover border border-slate-200">
                                         @else
@@ -228,7 +260,7 @@
                                                 {{ substr($student->name, 0, 1) }}
                                             </div>
                                         @endif
-                                    </td>
+                                    </td> --}}
                                     <td class="px-4 py-2.5 whitespace-nowrap font-medium text-slate-900">
                                         <a href="{{ route('students.history', $student) }}" class="hover:text-emerald-700">
                                             {{ $student->name }}
