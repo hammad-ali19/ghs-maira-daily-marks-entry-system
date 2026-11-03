@@ -11,67 +11,102 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full flex flex-col font-sans antialiased text-slate-800">
-    <!-- Top Header (Pakistani Government School Dark Green) -->
-    <header class="bg-emerald-900 text-white shadow-md z-30 no-print">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Brand / School Title -->
-                <div class="flex items-center space-x-3">
-                    <button id="mobileMenuBtn" type="button" class="md:hidden p-2 rounded-md text-emerald-100 hover:text-white hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-white">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-                    <a href="{{ route('dashboard') }}" class="flex items-center space-x-2.5">
-                        <div class="w-10 h-10 rounded-full bg-white text-emerald-900 font-bold flex items-center justify-center border-2 border-emerald-400 shadow-sm text-sm">
-                            GHS
-                        </div>
-                        <div>
-                            <span class="font-bold text-lg tracking-tight hidden md:block leading-tight text-white">
-                                    {{ config('app.name', 'GHS Maira Quick Test System') }}
-                            </span>
-                            <!-- Short app name/Abbreviation: visible by default, hidden on medium/large screens -->
-                            <span class="font-bold text-lg tracking-tight block md:hidden leading-tight text-white">
-                                {{ config('app.short_name', 'Quick Test Record System') }}
-                            </span>
-                            <span class="text-xs text-emerald-200 block">Daily Test & Academic Records</span>
-                        </div>
-                    </a>
-                </div>
 
-                <!-- User Profile & Logout -->
-                <div class="flex items-center space-x-4">
-                    <div class="hidden sm:flex flex-col items-center gap-0.5 mb-1 text-right">
-                        <span class="text-sm font-semibold text-white">{{ auth()->user()->name }}</span>
-                        <span class="text-xs text-emerald-200">
-                            @if(auth()->user()->isAdmin())
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-800 text-emerald-100 border border-emerald-700">Administrator</span>
-                            @elseif(auth()->user()->isTeacher())
-                                @php($inchargeSections = auth()->user()->inchargeOf()->with('schoolClass')->get())
-                                    @if($inchargeSections->isNotEmpty())
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-800 text-emerald-100 border border-emerald-700">
-                                            Teacher • {{ $inchargeSections->pluck('full_name')->join(', ') }}
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-800 text-emerald-100 border border-emerald-700">Teacher</span>
-                                    @endif
-                            @endif
-                        </span>
+<header class="bg-emerald-900 text-white shadow-md z-30 no-print">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between min-h-16 py-2 gap-2">
+
+            <!-- Brand / School Title -->
+            <div class="flex items-center min-w-0 flex-1 gap-2 sm:gap-3">
+
+                <button id="mobileMenuBtn"
+                    type="button"
+                    class="md:hidden shrink-0 p-2 rounded-md text-emerald-100 hover:text-white hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-white">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+
+                <a href="{{ route('dashboard') }}"
+                    class="flex items-center min-w-0 gap-2 sm:gap-2.5">
+
+                    <!-- Logo -->
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full bg-white text-emerald-900 font-bold flex items-center justify-center border-2 border-emerald-400 shadow-sm text-xs sm:text-sm">
+                        GHS
                     </div>
 
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
-                        @csrf
-                        <button type="submit" class="inline-flex items-center px-3 py-2 -mb-1 border border-emerald-700 text-xs font-medium rounded-md text-emerald-100 bg-emerald-800/80 hover:bg-emerald-700 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
-                            Logout
-                        </button>
-                    </form>
+                    <!-- School Name -->
+                    <div class="min-w-0 flex flex-col justify-center">
+
+                        <!-- Desktop Title -->
+                        <span class="hidden md:block font-bold text-base lg:text-lg tracking-tight leading-tight text-white truncate">
+                            {{ config('app.name', 'GHS Maira Quick Test System') }}
+                        </span>
+
+                        <!-- Mobile Title -->
+                        <span class="block md:hidden font-bold text-sm sm:text-base tracking-tight leading-tight text-white truncate">
+                            {{ config('app.short_name', 'Quick Test Record System') }}
+                        </span>
+
+                        <span class="text-[10px] sm:text-xs text-emerald-200 leading-tight truncate">
+                            Daily Test & Academic Records
+                        </span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- User Profile & Logout -->
+            <div class="flex items-center shrink-0 gap-2 sm:gap-4">
+
+                <!-- User Information -->
+                <div class="hidden sm:flex flex-col items-end min-w-0">
+                    <span class="text-sm font-semibold text-white truncate max-w-40">
+                        {{ auth()->user()->name }}
+                    </span>
+
+                    <span class="text-xs text-emerald-200">
+                        @if(auth()->user()->isAdmin())
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-800 text-emerald-100 border border-emerald-700">
+                                Administrator
+                            </span>
+                        @elseif(auth()->user()->isTeacher())
+                            @php($inchargeSections = auth()->user()->inchargeOf()->with('schoolClass')->get())
+
+                            @if($inchargeSections->isNotEmpty())
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-800 text-emerald-100 border border-emerald-700 max-w-48 truncate">
+                                    Teacher • {{ $inchargeSections->pluck('full_name')->join(', ') }}
+                                </span>
+                            @else
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-800 text-emerald-100 border border-emerald-700">
+                                    Teacher
+                                </span>
+                            @endif
+                        @endif
+                    </span>
                 </div>
+
+                <!-- Logout -->
+                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+                    @csrf
+                    <button type="submit"
+                        class="inline-flex items-center justify-center px-2 sm:px-3 py-2 border border-emerald-700 text-xs font-medium rounded-md text-emerald-100 bg-emerald-800/80 hover:bg-emerald-700 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+
+                        <svg class="w-4 h-4 sm:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+
+                        <span class="hidden sm:inline">Logout</span>
+                        <span class="sm:hidden">Logout</span>
+                    </button>
+                </form>
+
             </div>
         </div>
-    </header>
+    </div>
+</header>
+
 
     <div class="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
         <!-- Sidebar Navigation (Desktop) -->

@@ -17,7 +17,7 @@
 
         <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
             @if($student->photo_path)
-                <img src="{{ $student->photo_path }}" alt="{{ $student->name }}" class="w-16 h-16 rounded-full object-cover border-2 border-emerald-600 shadow-sm">
+                <img src="{{ app()->environment('production') ? $student->photo_path : asset('storage/' . $student->photo_path) }}" alt="{{ $student->name }}" class="w-16 h-16 rounded-full object-cover border-2 border-emerald-600 shadow-sm">
             @endif
             <div>
                 <p class="font-bold text-slate-900">{{ $student->name }}</p>

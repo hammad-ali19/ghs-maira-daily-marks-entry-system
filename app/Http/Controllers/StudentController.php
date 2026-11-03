@@ -120,14 +120,20 @@ class StudentController extends Controller
         if (! $user->isAdmin() && $section->incharge_id !== $user->id) {
             abort(403, 'You can only add students to the class section for which you are the designated incharge.');
         }
-
-        // Store photo in storage/app/public/students
-        $result = $cloudinary->upload(
-            $request->file('photo')->getRealPath()
-        );
-        // $photoPath = $request->file('photo')->store('students', 'public');
-        $photoPath = $result['secure_url'];
-        $public_id = $result['public_id'];
+        $environment = getenv('APP_ENV') ?: 'production';
+        // dd($environment);
+        if ($environment === 'production') {
+            // Store photo in cloudinary storage
+            $result = $cloudinary->upload(
+                $request->file('photo')->getRealPath()
+            );
+            $photoPath = $result['secure_url'];
+            $public_id = $result['public_id'];
+        } else {
+            // Store photo in local stroage
+            $photoPath = $request->file('photo')->store('students', 'public');
+            $public_id = '';
+        }
         // dd($photoPath, $public_id);
         DB::transaction(function () use ($validated, $photoPath, $public_id, $section) {
             $student = Student::create([
@@ -223,20 +229,23 @@ class StudentController extends Controller
             ];
 
             if ($request->hasFile('photo')) {
-
-                // Delete old photo if exists
-                if ($student->photo_public_id) {
-                    $cloudinary->delete($student->photo_public_id);
+                $environment = getenv('APP_ENV') ?: 'production';
+                if ($environment === 'production') {
+                    // Delete old photo if exists
+                    if ($student->photo_public_id) {
+                        $cloudinary->delete($student->photo_public_id);
+                    }
+                    $result = $cloudinary->upload(
+                        $request->file('photo')->getRealPath()
+                    );
+                    $data['photo_path'] = $result['secure_url'];
+                    $data['photo_public_id'] = $result['public_id'];
+                } else {
+                    Storage::disk('public')->delete($student->photo_path);
+                    $data['photo_path'] = $request->file('photo')->store('students', 'public');
+                    $data['photo_public_id'] = '';
                 }
-                $result = $cloudinary->upload(
-                    $request->file('photo')->getRealPath()
-                );
-                $data['photo_path'] = $result['secure_url'];
-                $data['photo_public_id'] = $result['public_id'];
-                // $data['photo_path'] = $request->file('photo')->store('students', 'public');
             }
-
-
             $student->update($data);
 
             // If class section changed, preserve enrollment history!
@@ -283,12 +292,16 @@ class StudentController extends Controller
         }
 
         // Delete photo if exists
-        // if ($student->photo_path && Storage::disk('public')->exists($student->photo_path)) {
-        //     Storage::disk('public')->delete($student->photo_path);
-        // }
 
-        if ($student->photo_public_id) {
-            $cloudinary->delete($student->photo_public_id);
+        $environment = getenv('APP_ENV') ?: 'production';
+        if ($environment === 'production') {
+            if ($student->photo_public_id) {
+                $cloudinary->delete($student->photo_public_id);
+            }
+        } else {
+            if ($student->photo_path && Storage::disk('public')->exists($student->photo_path)) {
+                Storage::disk('public')->delete($student->photo_path);
+            }
         }
 
         $student->enrollments()->delete();

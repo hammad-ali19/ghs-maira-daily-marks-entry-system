@@ -16,7 +16,7 @@
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div class="flex items-center space-x-4">
                 @if($student->photo_path)
-                    <img src="{{ $student->photo_path }}" alt="{{ $student->name }}" class="w-18 h-18 rounded-full object-cover border-4 border-emerald-600 shadow-md">
+                    <img src="{{ app()->environment('production') ? $student->photo_path : asset('storage/' . $student->photo_path) }}" alt="{{ $student->name }}" class="w-18 h-18 rounded-full object-cover border-4 border-emerald-600 shadow-md">
                 @else
                     <div class="w-18 h-18 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-2xl border-4 border-emerald-600">
                         {{ substr($student->name, 0, 1) }}
