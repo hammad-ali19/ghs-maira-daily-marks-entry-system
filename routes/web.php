@@ -67,6 +67,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     // Student Test History (viewable by all teachers and admin across the school)
     Route::get('/students/{student}/history', [StudentHistoryController::class, 'show'])->name('students.history');
 
+    // Student Test History Report (Print / PDF)
+    Route::get('/students/{student}/history/report', [StudentHistoryController::class, 'report'])->name('students.history.report');
+    Route::get('/students/{student}/history/report/pdf', [StudentHistoryController::class, 'downloadPdf'])->name('students.history.report.pdf');
+
     // Daily Tests & Marks Entry
     Route::resource('tests', TestController::class);
 

@@ -68,7 +68,7 @@
                                 <div class="flex flex-wrap gap-1 max-w-xs">
                                     @forelse($teacher->teacherAssignments as $ta)
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] bg-slate-100 text-slate-700 border border-slate-200">
-                                            {{ $ta->classSectionSubject->subject->name }}
+                                            {{ $ta->classSectionSubject->subject->name }} - {{ $ta->classSectionSubject->classSection->full_name}}
                                         </span>
                                     @empty
                                         <span class="text-xs text-slate-400 italic">None</span>

@@ -7,10 +7,12 @@ use App\Models\Student;
 use App\Models\StudentEnrollment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use App\Services\CloudinaryService;
 
 class StudentController extends Controller
 {
@@ -75,30 +77,42 @@ class StudentController extends Controller
     /**
      * Store a newly created student in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CloudinaryService $cloudinary): RedirectResponse
     {
         $user = $request->user();
+        //         dd([
+        //     'hasFile' => $request->hasFile('photo'),
+        //     'file' => $request->file('photo'),
+        //     'upload_error' => $_FILES['photo']['error'] ?? null,
+        //     'upload_max_filesize' => ini_get('upload_max_filesize'),
+        //     'post_max_size' => ini_get('post_max_size'),
+        // ]);
+        // dd([
+        //     'upload_tmp_dir' => ini_get('upload_tmp_dir'),
+        //     'sys_temp_dir' => sys_get_temp_dir(),
+        //     'temp_dir_exists' => is_dir(sys_get_temp_dir()),
+        //     'temp_dir_writable' => is_writable(sys_get_temp_dir()),
+        // ]);
+        $validated = $request->validate(
+            [
+                'name' => ['required', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
+                'b_form_number' => ['required', 'regex:/^\d{5}-\d{7}-\d{1}$/', 'unique:students,b_form_number'],
+                'class_section_id' => ['required', 'exists:class_sections,id'],
+                'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:50'],
+            ],
+            [
+                // Rule-specific custom messages
+                'name.required' => 'Please enter the name of student.',
+                'name.regex' => 'The name must only contain letters and spaces.',
+                'b_form_number.required' => 'Please enter the B-Form / CNIC of student.',
+                'b_form_number.regex' => 'The B-Form / CNIC format must be 12345-1234567-1.',
+                'b_form_number.unique' => 'The student already exists in the system.',
+                'class_section_id.required' => 'Please select the class section.',
+                'photo.required' => 'Please upload the photo.',
+                'photo.max' => 'You can upload to max size 50KB.'
 
-        $validated = $request->validate([
-            'name' => ['required', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
-            'b_form_number' => ['required', 'regex:/^\d{5}-\d{7}-\d{1}$/', 'unique:students,b_form_number'],
-            'class_section_id' => ['required', 'exists:class_sections,id'],
-            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:20'],
-        ],
-        [
-            // Rule-specific custom messages
-            'name.required' => 'Please enter the name of student.',
-            'name.regex' => 'The name must only contain letters and spaces.',
-            'b_form_number.required' => 'Please enter the B-Form / CNIC of student.',
-            'b_form_number.regex' => 'The B-Form / CNIC format must be 12345-1234567-1.',
-            'b_form_number.unique' => 'The student already exists in the system.',
-            'class_section_id.required' => 'Please select the class section.',
-            'photo.image' => 'Somthing wrong with mimes',
-            'photo.required' => 'photo required',
-            'photo.mimes' => 'mimes error',
-            'photo.max' => 'size errro'
-            
-        ]);
+            ]
+        );
 
         $section = ClassSection::findOrFail($validated['class_section_id']);
 
@@ -108,13 +122,19 @@ class StudentController extends Controller
         }
 
         // Store photo in storage/app/public/students
-        $photoPath = $request->file('photo')->store('students', 'public');
-
-        DB::transaction(function () use ($validated, $photoPath, $section) {
+        $result = $cloudinary->upload(
+            $request->file('photo')->getRealPath()
+        );
+        // $photoPath = $request->file('photo')->store('students', 'public');
+        $photoPath = $result['secure_url'];
+        $public_id = $result['public_id'];
+        // dd($photoPath, $public_id);
+        DB::transaction(function () use ($validated, $photoPath, $public_id, $section) {
             $student = Student::create([
                 'name' => $validated['name'],
                 'b_form_number' => $validated['b_form_number'],
                 'photo_path' => $photoPath,
+                'photo_public_id' => $public_id,
                 'is_active' => true,
             ]);
 
@@ -159,7 +179,7 @@ class StudentController extends Controller
     /**
      * Update the student in storage.
      */
-    public function update(Request $request, Student $student): RedirectResponse
+    public function update(Request $request, Student $student, CloudinaryService $cloudinary): RedirectResponse
     {
         $user = $request->user();
         $student->load('currentEnrollment.classSection');
@@ -171,20 +191,23 @@ class StudentController extends Controller
             }
         }
 
-        $validated = $request->validate([
-            'name' => ['required', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
-            'b_form_number' => ['required', 'regex:/^\d{5}-\d{7}-\d{1}$/', Rule::unique('students')->ignore($student->id)],
-            'class_section_id' => ['required', 'exists:class_sections,id'],
-            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:1024'],
-            'is_active' => ['required', 'boolean'],
-        ],
-        [
-            // Rule-specific custom messages
-            'name.required' => 'Please enter the name of student.',
-            'name.regex' => 'The name must only contain letters and spaces.',
-            'b_form_number.required' => 'Please enter the B-Form / CNIC of student.',
-            'b_form_number.regex' => 'The B-Form / CNIC format must be 12345-1234567-1.' 
-        ]);
+        $validated = $request->validate(
+            [
+                'name' => ['required', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
+                'b_form_number' => ['required', 'regex:/^\d{5}-\d{7}-\d{1}$/', Rule::unique('students')->ignore($student->id)],
+                'class_section_id' => ['required', 'exists:class_sections,id'],
+                'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:50'],
+                'is_active' => ['required', 'boolean'],
+            ],
+            [
+                // Rule-specific custom messages
+                'name.required' => 'Please enter the name of student.',
+                'name.regex' => 'The name must only contain letters and spaces.',
+                'b_form_number.required' => 'Please enter the B-Form / CNIC of student.',
+                'b_form_number.regex' => 'The B-Form / CNIC format must be 12345-1234567-1.',
+                'photo.max' => 'You can upload to max size 50KB.'
+            ]
+        );
 
         $newSection = ClassSection::findOrFail($validated['class_section_id']);
 
@@ -192,7 +215,7 @@ class StudentController extends Controller
             abort(403, 'Cannot transfer student to a section you are not incharge of.');
         }
 
-        DB::transaction(function () use ($student, $validated, $request, $currentSection, $newSection) {
+        DB::transaction(function () use ($cloudinary, $student, $validated, $request, $currentSection, $newSection) {
             $data = [
                 'name' => $validated['name'],
                 'b_form_number' => $validated['b_form_number'],
@@ -200,12 +223,19 @@ class StudentController extends Controller
             ];
 
             if ($request->hasFile('photo')) {
+
                 // Delete old photo if exists
-                if ($student->photo_path && Storage::disk('public')->exists($student->photo_path)) {
-                    Storage::disk('public')->delete($student->photo_path);
+                if ($student->photo_public_id) {
+                    $cloudinary->delete($student->photo_public_id);
                 }
-                $data['photo_path'] = $request->file('photo')->store('students', 'public');
+                $result = $cloudinary->upload(
+                    $request->file('photo')->getRealPath()
+                );
+                $data['photo_path'] = $result['secure_url'];
+                $data['photo_public_id'] = $result['public_id'];
+                // $data['photo_path'] = $request->file('photo')->store('students', 'public');
             }
+
 
             $student->update($data);
 
@@ -235,9 +265,11 @@ class StudentController extends Controller
     /**
      * Remove or deactivate a student safely.
      */
-    public function destroy(Student $student): RedirectResponse
+    public function destroy(Student $student, CloudinaryService $cloudinary): RedirectResponse
     {
-        if (! auth()->user()->isAdmin()) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (! $user->isAdmin()) {
             abort(403, 'Only administrators can delete or deactivate students.');
         }
 
@@ -251,8 +283,12 @@ class StudentController extends Controller
         }
 
         // Delete photo if exists
-        if ($student->photo_path && Storage::disk('public')->exists($student->photo_path)) {
-            Storage::disk('public')->delete($student->photo_path);
+        // if ($student->photo_path && Storage::disk('public')->exists($student->photo_path)) {
+        //     Storage::disk('public')->delete($student->photo_path);
+        // }
+
+        if ($student->photo_public_id) {
+            $cloudinary->delete($student->photo_public_id);
         }
 
         $student->enrollments()->delete();
@@ -266,13 +302,14 @@ class StudentController extends Controller
      */
     public function clearHistory(Student $student): RedirectResponse
     {
-        if (! auth()->user()->isAdmin()) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (! $user->isAdmin()) {
             abort(403, 'Only administrators can clear student test history.');
         }
 
         DB::transaction(function () use ($student) {
             $student->testResults()->delete();
-            
         });
         return redirect()->route('students.history', $student)
             ->with('success', "All test history for '{$student->name}' has been deleted.");

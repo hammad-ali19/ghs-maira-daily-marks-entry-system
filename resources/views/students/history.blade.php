@@ -16,7 +16,7 @@
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div class="flex items-center space-x-4">
                 @if($student->photo_path)
-                    <img src="{{ asset('storage/' . $student->photo_path) }}" alt="{{ $student->name }}" class="w-18 h-18 rounded-full object-cover border-4 border-emerald-600 shadow-md">
+                    <img src="{{ $student->photo_path }}" alt="{{ $student->name }}" class="w-18 h-18 rounded-full object-cover border-4 border-emerald-600 shadow-md">
                 @else
                     <div class="w-18 h-18 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-2xl border-4 border-emerald-600">
                         {{ substr($student->name, 0, 1) }}
@@ -58,7 +58,7 @@
 
     <!-- Filter Bar (Subject & Date Range) -->
     <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-        <form method="GET" action="{{ route('students.history', $student) }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <form method="GET" action="{{ route('students.history', $student) }}" class="grid grid-cols-1 sm:grid-cols-6 gap-3">
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Filter by Subject</label>
                 <select name="subject_id" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-600">
@@ -83,12 +83,41 @@
                     class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-600">
             </div>
 
-            <div class="flex items-end gap-2">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Report Type</label>
+                <div class="space-y-1.5">
+                    <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="radio" name="report_type" value="individual_tests"
+                            {{ request('report_type', 'individual_tests') === 'individual_tests' ? 'checked' : '' }}
+                            class="rounded text-emerald-600">
+                        Individual Tests
+                    </label>
+                    <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="radio" name="report_type" value="subject_average"
+                            {{ request('report_type') === 'subject_average' ? 'checked' : '' }}
+                            class="rounded text-emerald-600">
+                        Average per Subject
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
                 <button type="submit" class="flex-1 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium rounded-lg shadow-xs transition">
                     Apply Filter
                 </button>
+            </div>
+
+            <div class="flex flex-col justify-center gap-2">
+                <a href="{{ route('students.history.report', $student) }}?{{ http_build_query(array_filter([
+                    'subject_id' => request('subject_id'),
+                    'date_from' => request('date_from'),
+                    'date_to' => request('date_to'),
+                    'report_type' => request('report_type', 'individual_tests'),
+                ])) }}" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium text-center rounded-lg shadow-xs transition">
+                    Generate Report
+                </a>
                 @if(request('subject_id') || request('date_from') || request('date_to'))
-                    <a href="{{ route('students.history', $student) }}" class="px-3 py-2 border border-slate-300 text-slate-600 hover:bg-slate-50 text-xs font-medium rounded-lg">
+                    <a href="{{ route('students.history', $student) }}" class="w-full py-2 border border-slate-300 text-slate-600 hover:bg-slate-50 text-xs font-medium text-center rounded-lg">
                         Reset
                     </a>
                 @endif

@@ -190,15 +190,15 @@
             </div>
         </div>
         @elseif($isAuthorizedIncharge)
-        <div class="lg:col-span-4 space-y-3">
+        <div class="lg:col-span-4 space-y-2 ">
                     @forelse($section->classSectionSubjects as $css)
-                        <div class="flex flex-row justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <div class="flex flex-row justify-between items-center p-3 bg-white rounded-lg border border-slate-200">
                             <div>
                                 <span class="font-bold text-emerald-950 text-sm">{{ $css->subject->name }}</span>             
                             </div>
 
                             <!-- Assigned Teachers for this Subject -->
-                            <div class="mt-1">
+                            <div class="">
                                 <div class="">
                                     @forelse($css->teacherAssignments as $ta)
                                         <div>

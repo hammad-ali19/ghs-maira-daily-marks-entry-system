@@ -249,3 +249,114 @@ test('teacher cannot clear test history for a student', function () {
     $response->assertStatus(403);
     $this->assertTrue($student->fresh()->testResults()->exists());
 });
+
+test('teacher can preview student test history report with individual tests', function () {
+    $teacher = User::factory()->teacher()->create();
+    $student = Student::factory()->create(['name' => 'Ali Raza']);
+
+    $class = SchoolClass::factory()->create(['name' => '6th']);
+    $section = ClassSection::factory()->create(['school_class_id' => $class->id, 'name' => 'A']);
+    $subject = Subject::factory()->create(['name' => 'Mathematics']);
+    $css = ClassSectionSubject::create(['class_section_id' => $section->id, 'subject_id' => $subject->id]);
+
+    $test = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'Algebra Quiz',
+        'test_date' => '2026-10-01',
+        'max_marks' => 20,
+        'created_by' => $teacher->id,
+    ]);
+    TestResult::create(['test_id' => $test->id, 'student_id' => $student->id, 'obtained_marks' => 18]);
+
+    $response = $this->actingAs($teacher)->get("/students/{$student->id}/history/report");
+
+    $response->assertStatus(200)
+        ->assertSee('Ali Raza')
+        ->assertSee('Algebra Quiz')
+        ->assertSee('Individual Tests')
+        ->assertSee('18');
+});
+
+test('student history report can be filtered by date range', function () {
+    $teacher = User::factory()->teacher()->create();
+    $student = Student::factory()->create();
+
+    $class = SchoolClass::factory()->create();
+    $section = ClassSection::factory()->create(['school_class_id' => $class->id]);
+    $subject = Subject::factory()->create(['name' => 'English']);
+    $css = ClassSectionSubject::create(['class_section_id' => $section->id, 'subject_id' => $subject->id]);
+
+    $testInRange = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'In Range Test',
+        'test_date' => '2026-10-10',
+        'max_marks' => 20,
+        'created_by' => $teacher->id,
+    ]);
+    TestResult::create(['test_id' => $testInRange->id, 'student_id' => $student->id, 'obtained_marks' => 15]);
+
+    $testOutOfRange = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'Out of Range Test',
+        'test_date' => '2026-09-01',
+        'max_marks' => 20,
+        'created_by' => $teacher->id,
+    ]);
+    TestResult::create(['test_id' => $testOutOfRange->id, 'student_id' => $student->id, 'obtained_marks' => 10]);
+
+    $response = $this->actingAs($teacher)->get("/students/{$student->id}/history/report?date_from=2026-10-01&date_to=2026-10-31");
+
+    $response->assertStatus(200)
+        ->assertSee('In Range Test')
+        ->assertDontSee('Out of Range Test');
+});
+
+test('student history report supports average per subject mode', function () {
+    $teacher = User::factory()->teacher()->create();
+    $student = Student::factory()->create();
+
+    $class = SchoolClass::factory()->create();
+    $section = ClassSection::factory()->create(['school_class_id' => $class->id]);
+    $subject = Subject::factory()->create(['name' => 'Physics']);
+    $css = ClassSectionSubject::create(['class_section_id' => $section->id, 'subject_id' => $subject->id]);
+
+    $test = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'Physics Quiz',
+        'test_date' => '2026-10-01',
+        'max_marks' => 20,
+        'created_by' => $teacher->id,
+    ]);
+    TestResult::create(['test_id' => $test->id, 'student_id' => $student->id, 'obtained_marks' => 16]);
+
+    $response = $this->actingAs($teacher)->get("/students/{$student->id}/history/report?report_type=subject_average");
+
+    $response->assertStatus(200)
+        ->assertSee('Average per Subject')
+        ->assertSee('Physics')
+        ->assertSee('16');
+});
+
+test('student history report can be downloaded as PDF', function () {
+    $teacher = User::factory()->teacher()->create();
+    $student = Student::factory()->create(['name' => 'Sara Khan']);
+
+    $class = SchoolClass::factory()->create();
+    $section = ClassSection::factory()->create(['school_class_id' => $class->id]);
+    $subject = Subject::factory()->create(['name' => 'Urdu']);
+    $css = ClassSectionSubject::create(['class_section_id' => $section->id, 'subject_id' => $subject->id]);
+
+    $test = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'Urdu Test',
+        'test_date' => '2026-10-01',
+        'max_marks' => 20,
+        'created_by' => $teacher->id,
+    ]);
+    TestResult::create(['test_id' => $test->id, 'student_id' => $student->id, 'obtained_marks' => 19]);
+
+    $response = $this->actingAs($teacher)->get("/students/{$student->id}/history/report/pdf");
+
+    $response->assertStatus(200)
+        ->assertHeader('content-type', 'application/pdf');
+});

@@ -11,6 +11,7 @@ use App\Models\Test;
 use App\Models\TestResult;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -42,11 +43,11 @@ class TestController extends Controller
         }
 
         if ($dateFrom = $request->input('date_from')) {
-            $query->where('test_date', '>=', $dateFrom);
+            $query->whereDate('test_date', '>=', $dateFrom);
         }
 
         if ($dateTo = $request->input('date_to')) {
-            $query->where('test_date', '<=', $dateTo);
+            $query->whereDate('test_date', '<=', $dateTo);
         }
 
         $tests = $query->latest('test_date')->latest('id')->paginate(15)->withQueryString();
@@ -241,12 +242,12 @@ class TestController extends Controller
         $highestMarks = $results->count() > 0 ? $results->max('obtained_marks') : 0;
         $lowestMarks = $results->count() > 0 ? $results->min('obtained_marks') : 0;
 
-        $user = auth()->user();
-        $section = $test->classSectionSubject->classSection;
-        $canEdit = $user->isAdmin()
-            || ($section->incharge_id === $user->id)
-            || $user->isAssignedTo($test->classSectionSubject);
-
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        // $section = $test->classSectionSubject->classSection;
+        // $canEdit = $user->isAdmin() || $user->isAssignedTo($test->classSectionSubject);
+        $canEdit = $user->isAdmin() || $user->id === $test->creator->id;
+        // dump($canEdit);
         return view('tests.show', compact('test', 'results', 'averageMarks', 'highestMarks', 'lowestMarks', 'canEdit'));
     }
 
@@ -255,7 +256,8 @@ class TestController extends Controller
      */
     public function edit(Test $test): View
     {
-        $user = auth()->user();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
         $test->load([
             'classSectionSubject.classSection.schoolClass',
             'classSectionSubject.subject',
@@ -353,7 +355,9 @@ class TestController extends Controller
      */
     public function destroy(Test $test): RedirectResponse
     {
-        if (! auth()->user()->isAdmin()) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (! $user->isAdmin()) {
             abort(403, 'Only administrators can delete test records.');
         }
 
