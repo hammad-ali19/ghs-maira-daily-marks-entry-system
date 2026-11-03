@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "outputDirectory": "public",
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.7.3"
@@ -9,6 +10,10 @@
     {
       "src": "/_vercel/insights(.*)",
       "dest": "/_vercel/insights$1"
+    },
+    {
+      "src": "/build/(.*)",
+      "dest": "/public/build/$1"
     },
     {
       "src": "/(.*)",
