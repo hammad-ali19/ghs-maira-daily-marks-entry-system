@@ -118,13 +118,14 @@
                                 <th class="px-4 py-3 text-left">Photo</th>
                                 <th class="px-4 py-3 text-left">Student Name</th>
                                 <th class="px-4 py-3 text-left">B-Form Number</th>
+                                <th class="px-4 py-3 text-center w-28">Status</th>
                                 <th class="px-4 py-3 text-left w-48">Obtained Marks <span class="text-rose-500">*</span></th>
                                 <th class="px-4 py-3 text-center w-28">Percentage</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             @foreach($students as $index => $student)
-                                <tr class="hover:bg-slate-50 transition">
+                                <tr id="row_{{ $index }}" class="hover:bg-slate-50 transition {{ old("marks.{$index}.is_absent") ? 'bg-rose-50/40' : '' }}">
                                     <td class="px-4 py-3 text-slate-400 font-mono text-xs">{{ $index + 1 }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         @if($student->photo_path)
@@ -142,16 +143,27 @@
                                     <td class="px-4 py-3 whitespace-nowrap font-mono text-xs text-slate-500">
                                         {{ $student->b_form_number }}
                                     </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer px-2.5 py-1 rounded-md border border-slate-200 hover:bg-rose-50 hover:border-rose-300 transition text-xs font-semibold text-slate-700 select-none">
+                                            <input type="checkbox" 
+                                                name="marks[{{ $index }}][is_absent]" 
+                                                id="absent_{{ $index }}" 
+                                                value="1" 
+                                                class="w-4 h-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500" 
+                                                {{ old("marks.{$index}.is_absent") ? 'checked' : '' }}
+                                                onchange="toggleAbsent({{ $index }})">
+                                            <span class="text-rose-700">Absent</span>
+                                        </label>
+                                    </td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="flex items-center space-x-2">
                                             <input type="number" step="0.5" min="0" 
                                                 name="marks[{{ $index }}][obtained]" 
                                                 id="obtained_{{ $index }}"
                                                 value="{{ old("marks.{$index}.obtained", 0) }}" 
-                                                required
-                                                class="w-24 px-3 py-1.5 rounded border border-slate-300 font-bold text-slate-900 focus:ring-emerald-600 focus:border-emerald-600 text-sm mark-input"
+                                                class="w-24 px-3 py-1.5 rounded border border-slate-300 font-bold text-slate-900 focus:ring-emerald-600 focus:border-emerald-600 text-sm mark-input disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200"
                                                 oninput="calculatePercentage({{ $index }})">
-                                            <span class="text-xs text-slate-400">/ <span class="max-display">20</span></span>
+                                            <span class="text-xs text-slate-400" id="max_label_{{ $index }}">/ <span class="max-display">20</span></span>
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-center">
@@ -189,7 +201,7 @@
             <p class="text-xs text-amber-700 mb-4">There are currently no active students enrolled in this class section.</p>
             @if($isAuthorized)
             <a href="{{ route('students.create', ['class_section_id' => $selectedSectionId]) }}" class="inline-flex items-center px-4 py-2 bg-amber-700 text-white text-xs font-semibold rounded-lg">
-                Enroll Students in Class {{$isAuthorized}} &rarr;
+                Enroll Students in Class &rarr;
             </a>
             @endif
         </div>
@@ -202,7 +214,37 @@
         return input ? parseFloat(input.value) || 20 : 20;
     }
 
+    function toggleAbsent(index) {
+        const checkbox = document.getElementById('absent_' + index);
+        const obtainedInput = document.getElementById('obtained_' + index);
+        const percentSpan = document.getElementById('percent_' + index);
+        const row = document.getElementById('row_' + index);
+        const isAbsent = checkbox && checkbox.checked;
+
+        if (isAbsent) {
+            obtainedInput.dataset.prevValue = obtainedInput.value;
+            obtainedInput.value = '';
+            obtainedInput.disabled = true;
+            obtainedInput.classList.remove('border-rose-500', 'bg-rose-50');
+            percentSpan.className = 'text-xs font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800';
+            percentSpan.innerText = 'Absent';
+            if (row) row.classList.add('bg-rose-50/40');
+        } else {
+            obtainedInput.disabled = false;
+            if (obtainedInput.value === '') {
+                obtainedInput.value = obtainedInput.dataset.prevValue || '0';
+            }
+            if (row) row.classList.remove('bg-rose-50/40');
+            calculatePercentage(index);
+        }
+    }
+
     function calculatePercentage(index) {
+        const checkbox = document.getElementById('absent_' + index);
+        if (checkbox && checkbox.checked) {
+            return;
+        }
+
         const max = getMaxMarks();
         const obtainedInput = document.getElementById('obtained_' + index);
         const percentSpan = document.getElementById('percent_' + index);
@@ -236,14 +278,24 @@
         const max = getMaxMarks();
         document.querySelectorAll('.max-display').forEach(el => el.innerText = max);
         const inputs = document.querySelectorAll('.mark-input');
-        inputs.forEach((input, idx) => calculatePercentage(idx));
+        inputs.forEach((input, idx) => {
+            const checkbox = document.getElementById('absent_' + idx);
+            if (checkbox && checkbox.checked) {
+                toggleAbsent(idx);
+            } else {
+                calculatePercentage(idx);
+            }
+        });
     }
 
     function fillAllMarks(value) {
         const inputs = document.querySelectorAll('.mark-input');
         inputs.forEach((input, idx) => {
-            input.value = value;
-            calculatePercentage(idx);
+            const checkbox = document.getElementById('absent_' + idx);
+            if (!checkbox || !checkbox.checked) {
+                input.value = value;
+                calculatePercentage(idx);
+            }
         });
     }
 

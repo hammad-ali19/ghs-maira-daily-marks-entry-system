@@ -87,6 +87,14 @@
             <span class="text-xl font-extrabold text-slate-900">{{ $totalTests }}</span>
         </div>
         <div>
+            <span class="text-xs text-slate-500 font-bold uppercase block">Tests Appeared</span>
+            <span class="text-xl font-extrabold text-emerald-800">{{ $testsAppeared }}</span>
+        </div>
+        <div>
+            <span class="text-xs text-slate-500 font-bold uppercase block">Tests Absent</span>
+            <span class="text-xl font-extrabold text-rose-700">{{ $totalAbsents }}</span>
+        </div>
+        <div>
             <span class="text-xs text-slate-500 font-bold uppercase block">Overall Average</span>
             <span class="text-xl font-extrabold {{ $overallAverage >= 50 ? 'text-emerald-700' : 'text-amber-600' }}">{{ $overallAverage }}%</span>
         </div>
@@ -108,7 +116,9 @@
                     <thead class="bg-slate-100 text-slate-900 font-bold text-xs">
                         <tr>
                             <th class="px-3 py-2 text-left border border-slate-300">Subject</th>
-                            <th class="px-3 py-2 text-center border border-slate-300">Tests Taken</th>
+                            <th class="px-3 py-2 text-center border border-slate-300">Total Tests</th>
+                            <th class="px-3 py-2 text-center border border-slate-300">Appeared</th>
+                            <th class="px-3 py-2 text-center border border-slate-300">Absent</th>
                             <th class="px-3 py-2 text-center border border-slate-300">Avg Percentage</th>
                             <th class="px-3 py-2 text-center border border-slate-300">Avg Marks</th>
                             <th class="px-3 py-2 text-center border border-slate-300">Total Obtained</th>
@@ -124,6 +134,8 @@
                             <tr class="hover:bg-slate-50">
                                 <td class="px-3 py-2 font-bold text-slate-900 border border-slate-300">{{ $sub->name }}</td>
                                 <td class="px-3 py-2 text-center text-slate-600 border border-slate-300">{{ $summary['count'] }}</td>
+                                <td class="px-3 py-2 text-center text-emerald-800 font-semibold border border-slate-300">{{ $summary['appeared_count'] }}</td>
+                                <td class="px-3 py-2 text-center border border-slate-300 {{ $summary['absent_count'] > 0 ? 'text-rose-700 font-bold' : 'text-slate-600' }}">{{ $summary['absent_count'] }}</td>
                                 <td class="px-3 py-2 text-center font-bold border border-slate-300 {{ $avgPct >= 50 ? 'text-emerald-800' : 'text-rose-700' }}">{{ $avgPct }}%</td>
                                 <td class="px-3 py-2 text-center text-slate-600 border border-slate-300">{{ $summary['average_marks'] }}</td>
                                 <td class="px-3 py-2 text-center text-slate-600 border border-slate-300">{{ $summary['total_obtained'] }}</td>
@@ -131,7 +143,7 @@
                             </tr>
                             <!-- Individual tests under this subject -->
                             <tr>
-                                <td colspan="6" class="p-0 border border-slate-300">
+                                <td colspan="8" class="p-0 border border-slate-300">
                                     <div class="bg-slate-50 border-b border-slate-200 p-2">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-semibold text-slate-500 uppercase">Test Details</span>
@@ -154,13 +166,25 @@
                                                     $test = $result->test;
                                                     $pct = $result->percentage;
                                                 @endphp
-                                                <tr class="hover:bg-slate-50/50">
+                                                <tr class="hover:bg-slate-50/50 {{ $result->is_absent ? 'bg-rose-50/40' : '' }}">
                                                     <td class="px-3 py-1.5 text-slate-600 whitespace-nowrap border-b border-slate-100">{{ $test->test_date->format('d M Y') }}</td>
                                                     <td class="px-3 py-1.5 text-slate-600 whitespace-nowrap border-b border-slate-100 text-xs">{{ $test->classSectionSubject->classSection->full_name }}</td>
                                                     <td class="px-3 py-1.5 text-slate-600 border-b border-slate-100">{{ $test->title }}</td>
-                                                    <td class="px-3 py-1.5 text-center font-bold text-slate-900 border-b border-slate-100">{{ $result->obtained_marks }}</td>
+                                                    <td class="px-3 py-1.5 text-center font-bold border-b border-slate-100 {{ $result->is_absent ? 'text-rose-700' : 'text-slate-900' }}">
+                                                        @if($result->is_absent)
+                                                            Absent
+                                                        @else
+                                                            {{ $result->obtained_marks }}
+                                                        @endif
+                                                    </td>
                                                     <td class="px-3 py-1.5 text-center text-slate-600 border-b border-slate-100">{{ $test->max_marks }}</td>
-                                                    <td class="px-3 py-1.5 text-center text-slate-600 border-b border-slate-100">{{ $pct }}%</td>
+                                                    <td class="px-3 py-1.5 text-center text-slate-600 border-b border-slate-100">
+                                                        @if($result->is_absent)
+                                                            -
+                                                        @else
+                                                            {{ $pct }}%
+                                                        @endif
+                                                    </td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
@@ -192,17 +216,27 @@
                                 $test = $result->test;
                                 $pct = $result->percentage;
                             @endphp
-                            <tr class="hover:bg-slate-50">
+                            <tr class="hover:bg-slate-50 {{ $result->is_absent ? 'bg-rose-50/40' : '' }}">
                                 <td class="px-3 py-2 whitespace-nowrap font-medium text-slate-900 border border-slate-300">{{ $test->test_date->format('d M Y') }}</td>
                                 <td class="px-3 py-2 text-slate-600 border border-slate-300">{{ $test->classSectionSubject->classSection->full_name }}</td>
                                 <td class="px-3 py-2 font-bold text-slate-800 border border-slate-300">{{ $test->classSectionSubject->subject->name }}</td>
                                 <td class="px-3 py-2 text-slate-600 border border-slate-300">{{ $test->title }}</td>
-                                <td class="px-3 py-2 text-center font-bold text-slate-900 border border-slate-300">{{ $result->obtained_marks }}</td>
+                                <td class="px-3 py-2 text-center font-bold border border-slate-300 {{ $result->is_absent ? 'text-rose-700' : 'text-slate-900' }}">
+                                    @if($result->is_absent)
+                                        Absent
+                                    @else
+                                        {{ $result->obtained_marks }}
+                                    @endif
+                                </td>
                                 <td class="px-3 py-2 text-center text-slate-600 border border-slate-300">{{ $test->max_marks }}</td>
                                 <td class="px-3 py-2 text-center whitespace-nowrap border border-slate-300">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold {{ $pct >= 80 ? 'bg-emerald-100 text-emerald-800' : ($pct >= 50 ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800') }}">
-                                        {{ $pct }}%
-                                    </span>
+                                    @if($result->is_absent)
+                                        <span class="text-xs text-slate-400 font-medium">-</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold {{ $pct >= 80 ? 'bg-emerald-100 text-emerald-800' : ($pct >= 50 ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800') }}">
+                                            {{ $pct }}%
+                                        </span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

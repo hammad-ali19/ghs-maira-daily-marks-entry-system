@@ -25,11 +25,14 @@ class ReportController extends Controller
 
         $results = $test->results->sortBy('student.name');
 
-        $averageMarks = $results->count() > 0 ? round($results->avg('obtained_marks'), 1) : 0;
-        $highestMarks = $results->count() > 0 ? $results->max('obtained_marks') : 0;
-        $lowestMarks = $results->count() > 0 ? $results->min('obtained_marks') : 0;
+        $presentResults = $results->where('is_absent', false);
+        $averageMarks = $presentResults->count() > 0 ? round($presentResults->avg('obtained_marks'), 1) : 0;
+        $highestMarks = $presentResults->count() > 0 ? $presentResults->max('obtained_marks') : 0;
+        $lowestMarks = $presentResults->count() > 0 ? $presentResults->min('obtained_marks') : 0;
+        $presentCount = $presentResults->count();
+        $absentCount = $results->where('is_absent', true)->count();
 
-        return view('reports.show', compact('test', 'results', 'averageMarks', 'highestMarks', 'lowestMarks'));
+        return view('reports.show', compact('test', 'results', 'averageMarks', 'highestMarks', 'lowestMarks', 'presentCount', 'absentCount'));
     }
 
     /**
@@ -46,11 +49,14 @@ class ReportController extends Controller
 
         $results = $test->results->sortBy('student.name');
 
-        $averageMarks = $results->count() > 0 ? round($results->avg('obtained_marks'), 1) : 0;
-        $highestMarks = $results->count() > 0 ? $results->max('obtained_marks') : 0;
-        $lowestMarks = $results->count() > 0 ? $results->min('obtained_marks') : 0;
+        $presentResults = $results->where('is_absent', false);
+        $averageMarks = $presentResults->count() > 0 ? round($presentResults->avg('obtained_marks'), 1) : 0;
+        $highestMarks = $presentResults->count() > 0 ? $presentResults->max('obtained_marks') : 0;
+        $lowestMarks = $presentResults->count() > 0 ? $presentResults->min('obtained_marks') : 0;
+        $presentCount = $presentResults->count();
+        $absentCount = $results->where('is_absent', true)->count();
 
-        $pdf = Pdf::loadView('reports.pdf', compact('test', 'results', 'averageMarks', 'highestMarks', 'lowestMarks'))
+        $pdf = Pdf::loadView('reports.pdf', compact('test', 'results', 'averageMarks', 'highestMarks', 'lowestMarks', 'presentCount', 'absentCount'))
             ->setPaper('a4', 'portrait');
 
         $className = str_replace(' ', '_', $test->classSectionSubject->classSection->full_name);
@@ -111,9 +117,9 @@ class ReportController extends Controller
                     $sr++,
                     $result->student->name,
                     $result->student->b_form_number,
-                    $result->obtained_marks,
+                    $result->is_absent ? 'Absent' : $result->obtained_marks,
                     $test->max_marks,
-                    $result->percentage.'%',
+                    $result->is_absent ? 'Absent' : ($result->percentage !== null ? $result->percentage.'%' : '0%'),
                 ]);
             }
 

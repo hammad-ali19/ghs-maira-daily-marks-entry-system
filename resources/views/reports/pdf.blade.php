@@ -172,13 +172,25 @@
         </thead>
         <tbody>
             @foreach($results as $result)
-                <tr>
+                <tr @if($result->is_absent) style="background-color: #fff1f2;" @endif>
                     <td class="text-center">{{ $loop->iteration }}</td>
                     <td class="font-bold">{{ $result->student->name }}</td>
                     <td>{{ $result->student->b_form_number }}</td>
-                    <td class="text-center font-bold">{{ $result->obtained_marks }}</td>
+                    <td class="text-center font-bold" @if($result->is_absent) style="color: #b91c1c;" @endif>
+                        @if($result->is_absent)
+                            Absent
+                        @else
+                            {{ $result->obtained_marks }}
+                        @endif
+                    </td>
                     <td class="text-center">{{ $test->max_marks }}</td>
-                    <td class="text-center font-bold">{{ $result->percentage }}%</td>
+                    <td class="text-center font-bold">
+                        @if($result->is_absent)
+                            -
+                        @else
+                            {{ $result->percentage }}%
+                        @endif
+                    </td>
                 </tr>
             @endforeach
         </tbody>
@@ -187,19 +199,27 @@
     <table class="stats-table">
         <tr>
             <td>
-                <span class="stats-label">Total Tested</span>
+                <span class="stats-label">Total Students</span>
                 <span class="stats-val">{{ $results->count() }}</span>
+            </td>
+            <td>
+                <span class="stats-label">Present</span>
+                <span class="stats-val" style="color: #15803d;">{{ $presentCount }}</span>
+            </td>
+            <td>
+                <span class="stats-label">Absent</span>
+                <span class="stats-val" style="color: #b91c1c;">{{ $absentCount }}</span>
             </td>
             <td>
                 <span class="stats-label">Class Average</span>
                 <span class="stats-val" style="color: #15803d;">{{ $averageMarks }} / {{ $test->max_marks }}</span>
             </td>
             <td>
-                <span class="stats-label">Highest Score</span>
+                <span class="stats-label">Highest</span>
                 <span class="stats-val">{{ $highestMarks }}</span>
             </td>
             <td>
-                <span class="stats-label">Lowest Score</span>
+                <span class="stats-label">Lowest</span>
                 <span class="stats-val">{{ $lowestMarks }}</span>
             </td>
         </tr>

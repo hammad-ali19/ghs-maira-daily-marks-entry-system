@@ -9,6 +9,7 @@ use App\Models\StudentEnrollment;
 use App\Models\Subject;
 use App\Models\Test;
 use App\Models\TestResult;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -98,7 +99,7 @@ class TestController extends Controller
                 $cssQuery = ClassSectionSubject::with('subject')
                     ->where('class_section_id', $selectedSectionId);
 
-                if (! $user->isAdmin()) {     //  && $selectedSection->incharge_id !== $user->id 
+                if (! $user->isAdmin()) {     //  && $selectedSection->incharge_id !== $user->id
                     $cssQuery->whereHas('teacherAssignments', function ($tq) use ($user) {
                         $tq->where('user_id', $user->id);
                     });
@@ -126,7 +127,7 @@ class TestController extends Controller
             }
         }
 
-        return view('tests.create', compact('isAuthorized','sections', 'selectedSectionId', 'selectedSubjectId', 'availableSubjects', 'students'));
+        return view('tests.create', compact('isAuthorized', 'sections', 'selectedSectionId', 'selectedSubjectId', 'availableSubjects', 'students'));
     }
 
     /**
@@ -144,7 +145,8 @@ class TestController extends Controller
             'max_marks' => ['required', 'integer', 'min:1', 'max:1000'],
             'marks' => ['required', 'array', 'min:1'],
             'marks.*.student_id' => ['required', 'exists:students,id'],
-            'marks.*.obtained' => ['required', 'numeric', 'min:0'],
+            'marks.*.is_absent' => ['nullable', 'boolean'],
+            'marks.*.obtained' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $section = ClassSection::findOrFail($validated['class_section_id']);
@@ -178,7 +180,7 @@ class TestController extends Controller
         $submittedStudentIds = [];
         foreach ($validated['marks'] as $index => $markData) {
             $studentId = (int) $markData['student_id'];
-            $obtained = (float) $markData['obtained'];
+            $isAbsent = filter_var($markData['is_absent'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
             if (! in_array($studentId, $enrolledStudentIds)) {
                 throw ValidationException::withMessages([
@@ -186,16 +188,26 @@ class TestController extends Controller
                 ]);
             }
 
-            if ($obtained > $maxMarks) {
-                throw ValidationException::withMessages([
-                    "marks.{$index}.obtained" => "Obtained marks ({$obtained}) cannot exceed maximum marks ({$maxMarks}).",
-                ]);
-            }
-
             if (in_array($studentId, $submittedStudentIds)) {
                 throw ValidationException::withMessages([
                     "marks.{$index}.student_id" => 'Duplicate marks entry detected for a student in this test.',
                 ]);
+            }
+
+            if (! $isAbsent) {
+                if (! isset($markData['obtained']) || $markData['obtained'] === null || $markData['obtained'] === '') {
+                    throw ValidationException::withMessages([
+                        "marks.{$index}.obtained" => 'Obtained marks are required unless the student is marked as absent.',
+                    ]);
+                }
+
+                $obtained = (float) $markData['obtained'];
+
+                if ($obtained > $maxMarks) {
+                    throw ValidationException::withMessages([
+                        "marks.{$index}.obtained" => "Obtained marks ({$obtained}) cannot exceed maximum marks ({$maxMarks}).",
+                    ]);
+                }
             }
 
             $submittedStudentIds[] = $studentId;
@@ -211,10 +223,13 @@ class TestController extends Controller
             ]);
 
             foreach ($validated['marks'] as $markData) {
+                $isAbsent = filter_var($markData['is_absent'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
                 TestResult::create([
                     'test_id' => $newTest->id,
                     'student_id' => $markData['student_id'],
-                    'obtained_marks' => $markData['obtained'],
+                    'is_absent' => $isAbsent,
+                    'obtained_marks' => $isAbsent ? null : $markData['obtained'],
                 ]);
             }
 
@@ -238,17 +253,21 @@ class TestController extends Controller
 
         $results = $test->results->sortBy('student.name');
 
-        $averageMarks = $results->count() > 0 ? round($results->avg('obtained_marks'), 1) : 0;
-        $highestMarks = $results->count() > 0 ? $results->max('obtained_marks') : 0;
-        $lowestMarks = $results->count() > 0 ? $results->min('obtained_marks') : 0;
+        $presentResults = $results->where('is_absent', false);
+        $averageMarks = $presentResults->count() > 0 ? round($presentResults->avg('obtained_marks'), 1) : 0;
+        $highestMarks = $presentResults->count() > 0 ? $presentResults->max('obtained_marks') : 0;
+        $lowestMarks = $presentResults->count() > 0 ? $presentResults->min('obtained_marks') : 0;
+        $presentCount = $presentResults->count();
+        $absentCount = $results->where('is_absent', true)->count();
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         // $section = $test->classSectionSubject->classSection;
         // $canEdit = $user->isAdmin() || $user->isAssignedTo($test->classSectionSubject);
         $canEdit = $user->isAdmin() || $user->id === $test->creator->id;
+
         // dump($canEdit);
-        return view('tests.show', compact('test', 'results', 'averageMarks', 'highestMarks', 'lowestMarks', 'canEdit'));
+        return view('tests.show', compact('test', 'results', 'averageMarks', 'highestMarks', 'lowestMarks', 'canEdit', 'presentCount', 'absentCount'));
     }
 
     /**
@@ -256,7 +275,7 @@ class TestController extends Controller
      */
     public function edit(Test $test): View
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $test->load([
             'classSectionSubject.classSection.schoolClass',
@@ -301,7 +320,8 @@ class TestController extends Controller
             'max_marks' => ['required', 'integer', 'min:1', 'max:1000'],
             'marks' => ['required', 'array', 'min:1'],
             'marks.*.student_id' => ['required', 'exists:students,id'],
-            'marks.*.obtained' => ['required', 'numeric', 'min:0'],
+            'marks.*.is_absent' => ['nullable', 'boolean'],
+            'marks.*.obtained' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $maxMarks = (float) $validated['max_marks'];
@@ -310,18 +330,28 @@ class TestController extends Controller
         $seenStudentIds = [];
         foreach ($validated['marks'] as $index => $markData) {
             $studentId = (int) $markData['student_id'];
-            $obtained = (float) $markData['obtained'];
-
-            if ($obtained > $maxMarks) {
-                throw ValidationException::withMessages([
-                    "marks.{$index}.obtained" => "Obtained marks ({$obtained}) cannot exceed maximum marks ({$maxMarks}).",
-                ]);
-            }
+            $isAbsent = filter_var($markData['is_absent'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
             if (in_array($studentId, $seenStudentIds)) {
                 throw ValidationException::withMessages([
                     "marks.{$index}.student_id" => 'Duplicate student result in submission.',
                 ]);
+            }
+
+            if (! $isAbsent) {
+                if (! isset($markData['obtained']) || $markData['obtained'] === null || $markData['obtained'] === '') {
+                    throw ValidationException::withMessages([
+                        "marks.{$index}.obtained" => 'Obtained marks are required unless the student is marked as absent.',
+                    ]);
+                }
+
+                $obtained = (float) $markData['obtained'];
+
+                if ($obtained > $maxMarks) {
+                    throw ValidationException::withMessages([
+                        "marks.{$index}.obtained" => "Obtained marks ({$obtained}) cannot exceed maximum marks ({$maxMarks}).",
+                    ]);
+                }
             }
 
             $seenStudentIds[] = $studentId;
@@ -335,13 +365,16 @@ class TestController extends Controller
             ]);
 
             foreach ($validated['marks'] as $markData) {
+                $isAbsent = filter_var($markData['is_absent'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
                 TestResult::updateOrCreate(
                     [
                         'test_id' => $test->id,
                         'student_id' => $markData['student_id'],
                     ],
                     [
-                        'obtained_marks' => $markData['obtained'],
+                        'is_absent' => $isAbsent,
+                        'obtained_marks' => $isAbsent ? null : $markData['obtained'],
                     ]
                 );
             }
@@ -355,7 +388,7 @@ class TestController extends Controller
      */
     public function destroy(Test $test): RedirectResponse
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         if (! $user->isAdmin()) {
             abort(403, 'Only administrators can delete test records.');

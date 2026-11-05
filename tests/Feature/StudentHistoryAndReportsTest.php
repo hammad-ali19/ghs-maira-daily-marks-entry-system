@@ -360,3 +360,66 @@ test('student history report can be downloaded as PDF', function () {
     $response->assertStatus(200)
         ->assertHeader('content-type', 'application/pdf');
 });
+
+test('student history page and reports accurately display absent records and statistics', function () {
+    $teacher = User::factory()->teacher()->create();
+    $student = Student::factory()->create(['name' => 'Khurram Shehzad']);
+
+    $class = SchoolClass::factory()->create(['name' => '10th']);
+    $section = ClassSection::factory()->create(['school_class_id' => $class->id, 'name' => 'A']);
+    $subject = Subject::factory()->create(['name' => 'Computer Science']);
+    $css = ClassSectionSubject::create(['class_section_id' => $section->id, 'subject_id' => $subject->id]);
+
+    StudentEnrollment::create(['student_id' => $student->id, 'class_section_id' => $section->id, 'enrolled_at' => now(), 'is_current' => true]);
+
+    $test1 = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'HTML Basics',
+        'test_date' => '2026-10-01',
+        'max_marks' => 20,
+        'created_by' => $teacher->id,
+    ]);
+    TestResult::create([
+        'test_id' => $test1->id,
+        'student_id' => $student->id,
+        'is_absent' => false,
+        'obtained_marks' => 16,
+    ]);
+
+    $test2 = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'CSS Styling Quiz',
+        'test_date' => '2026-10-08',
+        'max_marks' => 20,
+        'created_by' => $teacher->id,
+    ]);
+    TestResult::create([
+        'test_id' => $test2->id,
+        'student_id' => $student->id,
+        'is_absent' => true,
+        'obtained_marks' => null,
+    ]);
+
+    // Check student history page
+    $historyResponse = $this->actingAs($teacher)->get("/students/{$student->id}/history");
+    $historyResponse->assertStatus(200)
+        ->assertSee('Total Tests')
+        ->assertSee('Appeared')
+        ->assertSee('Absent')
+        ->assertSee('HTML Basics')
+        ->assertSee('CSS Styling Quiz');
+
+    // Check student history individual test report preview
+    $reportResponse = $this->actingAs($teacher)->get("/students/{$student->id}/history/report");
+    $reportResponse->assertStatus(200)
+        ->assertSee('Tests Appeared')
+        ->assertSee('Tests Absent')
+        ->assertSee('Absent');
+
+    // Check subject average report preview
+    $subjectAvgResponse = $this->actingAs($teacher)->get("/students/{$student->id}/history/report?report_type=subject_average");
+    $subjectAvgResponse->assertStatus(200)
+        ->assertSee('Appeared')
+        ->assertSee('Absent')
+        ->assertSee('Computer Science');
+});

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['test_id', 'student_id', 'obtained_marks'])]
+#[Fillable(['test_id', 'student_id', 'obtained_marks', 'is_absent'])]
 class TestResult extends Model
 {
     /**
@@ -16,6 +16,7 @@ class TestResult extends Model
     {
         return [
             'obtained_marks' => 'decimal:1',
+            'is_absent' => 'boolean',
         ];
     }
 
@@ -38,8 +39,12 @@ class TestResult extends Model
     /**
      * Get percentage.
      */
-    public function getPercentageAttribute(): float
+    public function getPercentageAttribute(): ?float
     {
+        if ($this->is_absent || $this->obtained_marks === null) {
+            return null;
+        }
+
         if ($this->test->max_marks <= 0) {
             return 0;
         }

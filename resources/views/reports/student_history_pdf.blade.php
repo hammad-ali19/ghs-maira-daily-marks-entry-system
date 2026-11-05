@@ -209,17 +209,21 @@
 
     <table class="summary-table">
         <tr>
-            <td>
+            <td width="25%">
                 <span class="summary-label">Total Tests</span>
                 <span class="summary-val">{{ $totalTests }}</span>
             </td>
-            <td>
+            <td width="25%">
+                <span class="summary-label">Tests Appeared</span>
+                <span class="summary-val" style="color: #15803d;">{{ $testsAppeared }}</span>
+            </td>
+            <td width="25%">
+                <span class="summary-label">Tests Absent</span>
+                <span class="summary-val" style="color: #b91c1c;">{{ $totalAbsents }}</span>
+            </td>
+            <td width="25%">
                 <span class="summary-label">Overall Average</span>
                 <span class="summary-val" style="color: #15803d;">{{ $overallAverage }}%</span>
-            </td>
-            <td width="33%">
-                <span class="summary-label">Student</span>
-                <span class="summary-val">{{ $student->name }}</span>
             </td>
         </tr>
     </table>
@@ -239,13 +243,17 @@
                     @endphp
                     <table class="subject-header">
                         <tr>
-                            <td width="70%">
+                            <td width="55%">
                                 <div class="subject-label">Subject</div>
                                 <div style="font-weight:bold;">{{ $sub->name }}</div>
                             </td>
                             <td width="15%" class="text-center">
-                                <div class="subject-label">Tests</div>
+                                <div class="subject-label">Total Tests</div>
                                 <div style="font-weight:bold;">{{ $summary['count'] }}</div>
+                            </td>
+                            <td width="15%" class="text-center">
+                                <div class="subject-label">Appeared / Absent</div>
+                                <div style="font-weight:bold;"><span style="color:#15803d;">{{ $summary['appeared_count'] }}</span> / <span style="color:#b91c1c;">{{ $summary['absent_count'] }}</span></div>
                             </td>
                             <td width="15%" class="text-center">
                                 <div class="subject-label">Avg %</div>
@@ -270,13 +278,25 @@
                                     $test = $result->test;
                                     $pct = $result->percentage;
                                 @endphp
-                                <tr>
+                                <tr @if($result->is_absent) style="background-color: #fff1f2;" @endif>
                                     <td class="text-center">{{ $test->test_date->format('d M Y') }}</td>
                                     <td>{{ $test->classSectionSubject->classSection->full_name }}</td>
                                     <td>{{ $test->title }}</td>
-                                    <td class="text-center font-bold">{{ $result->obtained_marks }}</td>
+                                    <td class="text-center font-bold" @if($result->is_absent) style="color: #b91c1c;" @endif>
+                                        @if($result->is_absent)
+                                            Absent
+                                        @else
+                                            {{ $result->obtained_marks }}
+                                        @endif
+                                    </td>
                                     <td class="text-center">{{ $test->max_marks }}</td>
-                                    <td class="text-center">{{ $pct }}%</td>
+                                    <td class="text-center">
+                                        @if($result->is_absent)
+                                            -
+                                        @else
+                                            {{ $pct }}%
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -302,14 +322,26 @@
                             $test = $result->test;
                             $pct = $result->percentage;
                         @endphp
-                        <tr>
+                        <tr @if($result->is_absent) style="background-color: #fff1f2;" @endif>
                             <td class="text-center">{{ $test->test_date->format('d M Y') }}</td>
                             <td>{{ $test->classSectionSubject->classSection->full_name }}</td>
                             <td>{{ $test->classSectionSubject->subject->name }}</td>
                             <td>{{ $test->title }}</td>
-                            <td class="text-center font-bold">{{ $result->obtained_marks }}</td>
+                            <td class="text-center font-bold" @if($result->is_absent) style="color: #b91c1c;" @endif>
+                                @if($result->is_absent)
+                                    Absent
+                                @else
+                                    {{ $result->obtained_marks }}
+                                @endif
+                            </td>
                             <td class="text-center">{{ $test->max_marks }}</td>
-                            <td class="text-center">{{ $pct }}%</td>
+                            <td class="text-center">
+                                @if($result->is_absent)
+                                    -
+                                @else
+                                    {{ $pct }}%
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

@@ -78,14 +78,24 @@
             <tbody class="divide-y divide-slate-200">
                 @foreach($results as $result)
                     @php $pct = $result->percentage; @endphp
-                    <tr class="hover:bg-slate-50">
+                    <tr class="hover:bg-slate-50 {{ $result->is_absent ? 'bg-rose-50/40' : '' }}">
                         <td class="px-3 py-2 text-slate-500 font-mono text-xs border border-slate-300">{{ $loop->iteration }}</td>
                         <td class="px-4 py-2 font-bold text-slate-900 border border-slate-300">{{ $result->student->name }}</td>
                         <td class="px-4 py-2 font-mono text-xs text-slate-600 border border-slate-300">{{ $result->student->b_form_number }}</td>
-                        <td class="px-4 py-2 text-center font-bold text-slate-900 border border-slate-300">{{ $result->obtained_marks }}</td>
+                        <td class="px-4 py-2 text-center font-bold border border-slate-300 {{ $result->is_absent ? 'text-rose-700' : 'text-slate-900' }}">
+                            @if($result->is_absent)
+                                Absent
+                            @else
+                                {{ $result->obtained_marks }}
+                            @endif
+                        </td>
                         <td class="px-4 py-2 text-center text-slate-600 border border-slate-300">{{ $test->max_marks }}</td>
-                        <td class="px-4 py-2 text-center font-bold border border-slate-300 {{ $pct >= 50 ? 'text-emerald-800' : 'text-rose-700' }}">
-                            {{ $pct }}%
+                        <td class="px-4 py-2 text-center font-bold border border-slate-300 {{ $result->is_absent ? 'text-slate-400' : ($pct >= 50 ? 'text-emerald-800' : 'text-rose-700') }}">
+                            @if($result->is_absent)
+                                -
+                            @else
+                                {{ $pct }}%
+                            @endif
                         </td>
                     </tr>
                 @endforeach
@@ -94,21 +104,29 @@
     </div>
 
     <!-- Summary Performance Statistics Box -->
-    <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center my-4">
+    <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 grid grid-cols-2 sm:grid-cols-6 gap-3 text-center my-4">
         <div>
-            <span class="text-xs text-slate-500 font-bold uppercase block">Total Students</span>
+            <span class="text-xs text-slate-500 font-bold uppercase block">Total</span>
             <span class="text-xl font-extrabold text-slate-900">{{ $results->count() }}</span>
         </div>
         <div>
-            <span class="text-xs text-slate-500 font-bold uppercase block">Class Average</span>
+            <span class="text-xs text-slate-500 font-bold uppercase block">Present</span>
+            <span class="text-xl font-extrabold text-emerald-800">{{ $presentCount }}</span>
+        </div>
+        <div>
+            <span class="text-xs text-slate-500 font-bold uppercase block">Absent</span>
+            <span class="text-xl font-extrabold text-rose-700">{{ $absentCount }}</span>
+        </div>
+        <div>
+            <span class="text-xs text-slate-500 font-bold uppercase block">Class Avg</span>
             <span class="text-xl font-extrabold text-emerald-800">{{ $averageMarks }} / {{ $test->max_marks }}</span>
         </div>
         <div>
-            <span class="text-xs text-slate-500 font-bold uppercase block">Highest Marks</span>
+            <span class="text-xs text-slate-500 font-bold uppercase block">Highest</span>
             <span class="text-xl font-extrabold text-slate-900">{{ $highestMarks }}</span>
         </div>
         <div>
-            <span class="text-xs text-slate-500 font-bold uppercase block">Lowest Marks</span>
+            <span class="text-xs text-slate-500 font-bold uppercase block">Lowest</span>
             <span class="text-xl font-extrabold text-slate-900">{{ $lowestMarks }}</span>
         </div>
     </div>

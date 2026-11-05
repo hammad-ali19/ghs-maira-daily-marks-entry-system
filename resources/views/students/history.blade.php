@@ -40,10 +40,20 @@
             </div>
 
             <!-- Stats badges -->
-            <div class="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-xl p-3 px-5">
+            <div class="flex flex-wrap items-center gap-3 sm:gap-4 bg-slate-50 border border-slate-200 rounded-xl p-3 px-5">
                 <div class="text-center">
                     <span class="block text-xs uppercase font-bold text-slate-400">Total Tests</span>
                     <span class="text-2xl font-extrabold text-slate-900">{{ $totalTests }}</span>
+                </div>
+                <div class="h-8 w-px bg-slate-200"></div>
+                <div class="text-center">
+                    <span class="block text-xs uppercase font-bold text-emerald-700">Appeared</span>
+                    <span class="text-2xl font-extrabold text-emerald-800">{{ $testsAppeared }}</span>
+                </div>
+                <div class="h-8 w-px bg-slate-200"></div>
+                <div class="text-center">
+                    <span class="block text-xs uppercase font-bold text-rose-600">Absent</span>
+                    <span class="text-2xl font-extrabold text-rose-700">{{ $totalAbsents }}</span>
                 </div>
                 <div class="h-8 w-px bg-slate-200"></div>
                 <div class="text-center">
@@ -160,9 +170,9 @@
                     @forelse($results as $result)
                         @php
                             $test = $result->test;
-                            $percentage = $test->max_marks > 0 ? round(($result->obtained_marks / $test->max_marks) * 100, 1) : 0;
+                            $percentage = $result->percentage;
                         @endphp
-                        <tr class="hover:bg-slate-50/70 transition">
+                        <tr class="hover:bg-slate-50/70 transition {{ $result->is_absent ? 'bg-rose-50/30' : '' }}">
                             <td class="px-4 py-3.5 whitespace-nowrap font-medium text-slate-900">
                                 {{ $test->test_date->format('d M Y') }}
                             </td>
@@ -178,15 +188,25 @@
                                 {{ $test->title }}
                             </td>
                             <td class="px-4 py-3.5 text-center font-bold text-slate-900">
-                                {{ $result->obtained_marks }}
+                                @if($result->is_absent)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800">
+                                        Absent
+                                    </span>
+                                @else
+                                    {{ $result->obtained_marks }}
+                                @endif
                             </td>
                             <td class="px-4 py-3.5 text-center text-slate-600">
                                 {{ $test->max_marks }}
                             </td>
                             <td class="px-4 py-3.5 text-center whitespace-nowrap">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold {{ $percentage >= 80 ? 'bg-emerald-100 text-emerald-800' : ($percentage >= 50 ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800') }}">
-                                    {{ $percentage }}%
-                                </span>
+                                @if($result->is_absent)
+                                    <span class="text-xs text-slate-400 font-medium">-</span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold {{ $percentage >= 80 ? 'bg-emerald-100 text-emerald-800' : ($percentage >= 50 ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800') }}">
+                                        {{ $percentage }}%
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-4 py-3.5 text-right whitespace-nowrap space-x-2 text-xs">
                                 <a href="{{ route('reports.test', $test) }}" class="text-emerald-700 hover:text-emerald-900 font-semibold">

@@ -64,22 +64,26 @@ class StudentHistoryController extends Controller
         //     })
         //     ->orderBy('name')
         //     ->get();
-        
+
         // Calculate summary statistics
         $allResults = TestResult::where('student_id', $student->id)
             ->with('test')
             ->get();
 
         $totalTests = $allResults->count();
+        $presentResults = $allResults->where('is_absent', false);
+        $totalAbsents = $allResults->where('is_absent', true)->count();
+        $testsAppeared = $presentResults->count();
+
         $averagePercentage = 0;
-        if ($totalTests > 0) {
-            $percentages = $allResults->map(function ($r) {
+        if ($testsAppeared > 0) {
+            $percentages = $presentResults->map(function ($r) {
                 return $r->test->max_marks > 0 ? ($r->obtained_marks / $r->test->max_marks) * 100 : 0;
             });
             $averagePercentage = round($percentages->avg(), 1);
         }
-        // dd($student->currentEnrollment->classSection->id);
-        return view('students.history', compact('student', 'results', 'subjects', 'totalTests', 'averagePercentage'));
+
+        return view('students.history', compact('student', 'results', 'subjects', 'totalTests', 'totalAbsents', 'testsAppeared', 'averagePercentage'));
     }
 
     /**
@@ -150,9 +154,14 @@ class StudentHistoryController extends Controller
             ->get();
 
         $totalTests = $results->count();
+        $presentResults = $results->where('is_absent', false);
+        $totalAbsents = $results->where('is_absent', true)->count();
+        $testsAppeared = $presentResults->count();
+
         $overallAverage = 0;
-        if ($totalTests > 0) {
-            $overallAverage = round($results->map(fn ($r) => $r->percentage)->avg(), 1);
+        if ($testsAppeared > 0) {
+            $percentages = $presentResults->map(fn ($r) => $r->percentage)->filter(fn ($p) => $p !== null);
+            $overallAverage = $percentages->count() > 0 ? round($percentages->avg(), 1) : 0;
         }
 
         $subjects = Subject::where('is_active', true)->orderBy('name')->get();
@@ -162,16 +171,20 @@ class StudentHistoryController extends Controller
             $subjectSummary = $results->groupBy(fn ($r) => $r->test->classSectionSubject->subject_id)
                 ->map(function ($subjectResults) {
                     $subject = $subjectResults->first()->test->classSectionSubject->subject;
-                    $percentages = $subjectResults->map(fn ($r) => $r->percentage);
-                    $obtainedSum = $subjectResults->sum('obtained_marks');
-                    $maxSum = $subjectResults->sum(fn ($r) => $r->test->max_marks);
+                    $present = $subjectResults->where('is_absent', false);
+                    $absentCount = $subjectResults->where('is_absent', true)->count();
+                    $percentages = $present->map(fn ($r) => $r->percentage)->filter(fn ($p) => $p !== null);
+                    $obtainedSum = $present->sum('obtained_marks');
+                    $maxSum = $present->sum(fn ($r) => $r->test->max_marks);
 
                     return [
                         'subject' => $subject,
                         'results' => $subjectResults->sortByDesc(fn ($r) => $r->test->test_date),
                         'count' => $subjectResults->count(),
-                        'average_percentage' => round($percentages->avg(), 1),
-                        'average_marks' => $subjectResults->count() > 0 ? round($obtainedSum / $subjectResults->count(), 1) : 0,
+                        'appeared_count' => $present->count(),
+                        'absent_count' => $absentCount,
+                        'average_percentage' => $percentages->count() > 0 ? round($percentages->avg(), 1) : 0,
+                        'average_marks' => $present->count() > 0 ? round($obtainedSum / $present->count(), 1) : 0,
                         'total_obtained' => $obtainedSum,
                         'total_max' => $maxSum,
                     ];
@@ -188,6 +201,8 @@ class StudentHistoryController extends Controller
             'subjects',
             'subjectSummary',
             'totalTests',
+            'totalAbsents',
+            'testsAppeared',
             'overallAverage'
         );
     }

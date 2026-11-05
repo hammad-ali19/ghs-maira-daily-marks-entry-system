@@ -209,3 +209,109 @@ test('authorized teacher can edit previously entered marks', function () {
     expect($test->fresh()->title)->toBe('Updated Title');
     expect((float) $result->fresh()->obtained_marks)->toBe(17.5);
 });
+
+test('teacher can mark a student as absent when recording test marks', function () {
+    $teacher = User::factory()->teacher()->create();
+    $class = SchoolClass::factory()->create();
+    $section = ClassSection::factory()->create(['school_class_id' => $class->id, 'incharge_id' => $teacher->id]);
+    $subject = Subject::factory()->create();
+    $css = ClassSectionSubject::create(['class_section_id' => $section->id, 'subject_id' => $subject->id]);
+
+    $student1 = Student::factory()->create();
+    StudentEnrollment::create(['student_id' => $student1->id, 'class_section_id' => $section->id, 'enrolled_at' => now(), 'is_current' => true]);
+
+    $student2 = Student::factory()->create();
+    StudentEnrollment::create(['student_id' => $student2->id, 'class_section_id' => $section->id, 'enrolled_at' => now(), 'is_current' => true]);
+
+    $response = $this->actingAs($teacher)->post('/tests', [
+        'class_section_id' => $section->id,
+        'class_section_subject_id' => $css->id,
+        'title' => 'Weekly Quiz with Absent Student',
+        'test_date' => '2026-10-20',
+        'max_marks' => 20,
+        'marks' => [
+            ['student_id' => $student1->id, 'obtained' => 18, 'is_absent' => 0],
+            ['student_id' => $student2->id, 'obtained' => '', 'is_absent' => 1],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $test = Test::where('title', 'Weekly Quiz with Absent Student')->first();
+    expect($test)->not->toBeNull();
+
+    $this->assertDatabaseHas('test_results', [
+        'test_id' => $test->id,
+        'student_id' => $student1->id,
+        'is_absent' => false,
+        'obtained_marks' => 18.0,
+    ]);
+
+    $this->assertDatabaseHas('test_results', [
+        'test_id' => $test->id,
+        'student_id' => $student2->id,
+        'is_absent' => true,
+        'obtained_marks' => null,
+    ]);
+
+    // View show page and ensure Absent badge and stats are displayed
+    $showResponse = $this->actingAs($teacher)->get("/tests/{$test->id}");
+    $showResponse->assertStatus(200)
+        ->assertSee('Absent')
+        ->assertSee('Present');
+});
+
+test('teacher can update an existing test result to mark a student absent or present', function () {
+    $teacher = User::factory()->teacher()->create();
+    $class = SchoolClass::factory()->create();
+    $section = ClassSection::factory()->create(['school_class_id' => $class->id, 'incharge_id' => $teacher->id]);
+    $subject = Subject::factory()->create();
+    $css = ClassSectionSubject::create(['class_section_id' => $section->id, 'subject_id' => $subject->id]);
+
+    $student = Student::factory()->create();
+    StudentEnrollment::create(['student_id' => $student->id, 'class_section_id' => $section->id, 'enrolled_at' => now(), 'is_current' => true]);
+
+    $test = Test::create([
+        'class_section_subject_id' => $css->id,
+        'title' => 'Test To Update Attendance',
+        'test_date' => '2026-10-20',
+        'max_marks' => 20,
+        'created_by' => $teacher->id,
+    ]);
+
+    $result = TestResult::create([
+        'test_id' => $test->id,
+        'student_id' => $student->id,
+        'is_absent' => false,
+        'obtained_marks' => 15,
+    ]);
+
+    // Mark student absent
+    $response = $this->actingAs($teacher)->put("/tests/{$test->id}", [
+        'title' => 'Test To Update Attendance',
+        'test_date' => '2026-10-20',
+        'max_marks' => 20,
+        'marks' => [
+            ['student_id' => $student->id, 'obtained' => '', 'is_absent' => 1],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $freshResult = $result->fresh();
+    expect($freshResult->is_absent)->toBeTrue();
+    expect($freshResult->obtained_marks)->toBeNull();
+
+    // Mark student present again
+    $response2 = $this->actingAs($teacher)->put("/tests/{$test->id}", [
+        'title' => 'Test To Update Attendance',
+        'test_date' => '2026-10-20',
+        'max_marks' => 20,
+        'marks' => [
+            ['student_id' => $student->id, 'obtained' => 19, 'is_absent' => 0],
+        ],
+    ]);
+
+    $response2->assertRedirect();
+    $freshResult2 = $result->fresh();
+    expect($freshResult2->is_absent)->toBeFalse();
+    expect((float) $freshResult2->obtained_marks)->toBe(19.0);
+});
