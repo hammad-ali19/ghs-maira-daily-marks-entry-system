@@ -61,7 +61,7 @@ class TeacherController extends Controller
         );
 
         User::create([
-            'name' => $validated['name'],
+            'name' => ucwords(trim($validated['name'])),
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => 'teacher',
@@ -105,7 +105,7 @@ class TeacherController extends Controller
         ]);
 
         $data = [
-            'name' => $validated['name'],
+            'name' => ucwords(trim($validated['name'])),
             'email' => $validated['email'],
             'is_active' => (bool) $validated['is_active'],
         ];

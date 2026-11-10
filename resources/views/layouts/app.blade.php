@@ -199,14 +199,48 @@
         <!-- Main Content Area -->
         <main class="flex-1 min-w-0">
             <!-- Flash Notifications -->
-            @if(session('success'))
+            {{-- @if(session('success'))
                 <div class="mb-5 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-800 flex items-start no-print">
                     <svg class="w-5 h-5 text-emerald-600 mr-3 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                     </svg>
                     <div class="text-sm font-medium">{{ session('success') }}</div>
                 </div>
-            @endif
+            @endif --}}
+
+
+@if(session('success'))
+<div id="toast-success" 
+     class="fixed top-5 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-800 flex items-start shadow-lg no-print transition-all duration-300 transform opacity-100" 
+     role="alert">
+    <svg class="w-5 h-5 text-emerald-600 mr-3 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+    </svg>
+    <div class="text-sm font-medium pr-6">{{ session('success') }}</div>
+    
+    <!-- Close Button -->
+    <button onclick="dismissToast()" class="absolute top-4 right-3 text-emerald-500 hover:text-emerald-900 rounded-md focus:outline-none" aria-label="Close">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L12 12M12 12l6 6M12 12m0 0l6-6M12 12l-6 6" />
+        </svg>
+    </button>
+</div>
+
+<script>
+    function dismissToast() {
+        const toast = document.getElementById('toast-success');
+        if (toast) {
+            // Fades out and slides slightly upward on dismiss
+            toast.classList.add('opacity-0', '-translate-y-4');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }
+
+    setTimeout(dismissToast, 4000);
+</script>
+@endif
+
+
 
             @if(session('warning'))
                 <div class="mb-5 rounded-lg bg-amber-50 border border-amber-200 p-4 text-amber-800 flex items-start no-print">

@@ -83,7 +83,7 @@
                                 <td class="px-4 py-3 text-slate-400 font-mono text-xs">{{ $loop->iteration }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     @if($student->photo_path)
-                                        <img src="{{ asset('storage/' . $student->photo_path) }}" alt="{{ $student->name }}" class="w-8 h-8 rounded-full object-cover border border-slate-200">
+                                        <img src="{{ app()->environment('production') ? $student->photo_path : asset('storage/' . $student->photo_path)  }}" class="w-8 h-8 rounded-full object-cover border border-slate-200">
                                     @else
                                         <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">
                                             {{ substr($student->name, 0, 1) }}
@@ -116,7 +116,7 @@
                                             id="obtained_{{ $index }}"
                                             value="{{ old("marks.{$index}.obtained", $result->is_absent ? '' : $result->obtained_marks) }}" 
                                             class="w-24 px-3 py-1.5 rounded border border-slate-300 font-bold text-slate-900 focus:ring-emerald-600 focus:border-emerald-600 text-sm mark-edit-input disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200"
-                                            oninput="calculateEditPercentage({{ $index }})">
+                                            oninput="calculateEditPercentage({{ $index }})" required>
                                         <span class="text-xs text-slate-400">/ <span class="max-display">{{ $test->max_marks }}</span></span>
                                     </div>
                                 </td>

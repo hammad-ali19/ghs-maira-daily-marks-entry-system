@@ -120,7 +120,6 @@ class TestController extends Controller
                     })
                     ->orderBy('name')
                     ->get();
-
             }
             if ($selectedSection) {
                 $isAuthorized = $selectedSection->incharge_id === $user->id || $user->isAdmin();
@@ -222,16 +221,36 @@ class TestController extends Controller
                 'created_by' => $user->id,
             ]);
 
+            // 1. Prepare an array to hold all records
+            $records = [];
+            $now = now(); // Ensure timestamps are identical for the batch
+
             foreach ($validated['marks'] as $markData) {
                 $isAbsent = filter_var($markData['is_absent'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-                TestResult::create([
-                    'test_id' => $newTest->id,
-                    'student_id' => $markData['student_id'],
-                    'is_absent' => $isAbsent,
+                $records[] = [
+                    'test_id'        => $newTest->id,
+                    'student_id'     => $markData['student_id'],
+                    'is_absent'      => $isAbsent,
                     'obtained_marks' => $isAbsent ? null : $markData['obtained'],
-                ]);
+                    'created_at'     => $now,
+                    'updated_at'     => $now,
+                ];
             }
+
+            // 2. Insert everything in a single query
+            TestResult::insert($records);
+
+            // foreach ($validated['marks'] as $markData) {
+            //     $isAbsent = filter_var($markData['is_absent'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+            //     TestResult::create([
+            //         'test_id' => $newTest->id,
+            //         'student_id' => $markData['student_id'],
+            //         'is_absent' => $isAbsent,
+            //         'obtained_marks' => $isAbsent ? null : $markData['obtained'],
+            //     ]);
+            // }
 
             return $newTest;
         });

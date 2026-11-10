@@ -137,7 +137,7 @@ class StudentController extends Controller
         // dd($photoPath, $public_id);
         DB::transaction(function () use ($validated, $photoPath, $public_id, $section) {
             $student = Student::create([
-                'name' => $validated['name'],
+                'name' => ucwords(trim($validated['name'])),
                 'b_form_number' => $validated['b_form_number'],
                 'photo_path' => $photoPath,
                 'photo_public_id' => $public_id,
@@ -223,7 +223,7 @@ class StudentController extends Controller
 
         DB::transaction(function () use ($cloudinary, $student, $validated, $request, $currentSection, $newSection) {
             $data = [
-                'name' => $validated['name'],
+                'name' => ucwords(trim($validated['name'])),
                 'b_form_number' => $validated['b_form_number'],
                 'is_active' => (bool) $validated['is_active'],
             ];
